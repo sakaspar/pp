@@ -1176,6 +1176,7 @@
       <div id="winner-rebuy-area" style="margin-bottom:12px;display:none;">
         <button class="action-btn btn-raise" style="font-size:0.8rem;padding:8px 16px;" onclick="handleRebuy()">+ Rebuy $1,000 for Next Hand</button>
       </div>
+      <div id="next-hand-countdown" style="font-size:0.75rem;color:var(--text-dim);margin-bottom:8px;"></div>
       <button class="btn btn-gold" id="next-hand-btn">Next Hand</button>
     </div>
   </div>
@@ -1708,6 +1709,21 @@ async function claimStarterBankroll() {
   updateAuthUI();
   toast('Another $5,000 added to your bankroll.');
 }
+async function cleanupStaleActiveTable() {
+  if (!currentUser || !userProfile?.activeTable?.roomCode) return false;
+  const oldRoom = userProfile.activeTable.roomCode;
+  try {
+    const snap = await get(ref(db, `poker/${oldRoom}`));
+    if (!snap.exists()) {
+      await releaseActiveTableFunds('table no longer exists');
+      setStatus('lobby-status', `Cleaned up stale table ${oldRoom}.`);
+      return true;
+    }
+    return false;
+  } catch (e) {
+    return false;
+  }
+}
 function ensureSignedIn() {
   if (currentUser) return true;
   setStatus('lobby-status', 'Sign in with Google to play.');
@@ -1953,8 +1969,18 @@ document.getElementById('create-btn').addEventListener('click', async () => {
   if (!buyInCheck.ok) { setStatus('lobby-status', buyInCheck.message); return; }
   const buyIn = buyInCheck.amount;
   if (userProfile?.activeTable?.roomCode) {
-    setStatus('lobby-status', `You're already seated at table ${userProfile.activeTable.roomCode}.`);
-    return;
+    if (!window._forceCreateTable) {
+      const cleaned = await cleanupStaleActiveTable();
+      if (!cleaned) {
+        window._forceCreateTable = true;
+        setStatus('lobby-status', `Table ${userProfile.activeTable.roomCode} still exists. Click Create again to force-clear and start a new table.`);
+        setTimeout(() => { window._forceCreateTable = false; }, 8000);
+        return;
+      }
+    } else {
+      window._forceCreateTable = false;
+      await releaseActiveTableFunds('force create new table');
+    }
   }
 
   const createBtn = document.getElementById('create-btn');
@@ -2016,8 +2042,18 @@ async function handleJoinSequence(code) {
   const name = identity?.displayName?.trim();
   if (!name) { setStatus('lobby-status','Your Google account needs a display name'); return; }
   if (userProfile?.activeTable?.roomCode) {
-    setStatus('lobby-status', `You're already seated at table ${userProfile.activeTable.roomCode}.`);
-    return;
+    if (!window._forceJoinTable) {
+      const cleaned = await cleanupStaleActiveTable();
+      if (!cleaned) {
+        window._forceJoinTable = true;
+        setStatus('lobby-status', `Table ${userProfile.activeTable.roomCode} still exists. Click Join again to force-clear and join a new table.`);
+        setTimeout(() => { window._forceJoinTable = false; }, 8000);
+        return;
+      }
+    } else {
+      window._forceJoinTable = false;
+      await releaseActiveTableFunds('force join new table');
+    }
   }
   
   const joinBtn = document.getElementById('join-btn');
@@ -2915,10 +2951,40 @@ async function showWinner(gs) {
     nextBtn.textContent = 'Next Hand';
   }
 
+  const countdownEl = document.getElementById('next-hand-countdown');
+  let countdownSecs = 8;
+
   if (!isHost) {
-    nextBtn.textContent = 'Waiting for host…'; nextBtn.disabled = true;
+    nextBtn.textContent = 'Next hand starting soon…'; nextBtn.disabled = true;
+    countdownEl.textContent = '⏳ Waiting for host…';
   } else {
     nextBtn.disabled = false;
+    nextBtn.textContent = `Next Hand (auto in ${countdownSecs}s)`;
+
+    if (window._autoAdvanceTimer) clearTimeout(window._autoAdvanceTimer);
+    if (window._countdownInterval) clearInterval(window._countdownInterval);
+
+    window._countdownInterval = setInterval(() => {
+      countdownSecs--;
+      if (countdownSecs <= 0) {
+        clearInterval(window._countdownInterval);
+        window._countdownInterval = null;
+        countdownEl.textContent = '⏳ Starting next hand…';
+        nextBtn.textContent = 'Starting…';
+      } else {
+        nextBtn.textContent = `Next Hand (auto in ${countdownSecs}s)`;
+        countdownEl.textContent = pending.length > 0 ? `⏳ ${pending.length} sitting in` : '';
+      }
+    }, 1000);
+
+    window._autoAdvanceTimer = setTimeout(async () => {
+      window._autoAdvanceTimer = null;
+      if (window._countdownInterval) { clearInterval(window._countdownInterval); window._countdownInterval = null; }
+      document.getElementById('winner-overlay').classList.remove('show');
+      const snap = await get(roomRef('/gameState'));
+      if (!snap.exists()) return;
+      await startNewHand(snap.val().players, false);
+    }, 8000);
   }
 
   document.getElementById('winner-overlay').classList.add('show');
@@ -2927,8 +2993,9 @@ async function showWinner(gs) {
 
 document.getElementById('next-hand-btn').addEventListener('click', async () => {
   if (!isHost) return;
+  if (window._autoAdvanceTimer) { clearTimeout(window._autoAdvanceTimer); window._autoAdvanceTimer = null; }
+  if (window._countdownInterval) { clearInterval(window._countdownInterval); window._countdownInterval = null; }
   document.getElementById('winner-overlay').classList.remove('show');
-  prevWinner = null;
   const snap = await get(roomRef('/gameState'));
   if (!snap.exists()) return;
   await startNewHand(snap.val().players, false);
