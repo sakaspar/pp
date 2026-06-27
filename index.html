@@ -875,6 +875,10 @@
     width: 60px; height: 84px;
     font-size: 0.85rem;
   }
+  .winner-cards-display .card.winning-card {
+    box-shadow: 0 0 14px 3px rgba(255,215,0,0.7), 0 0 0 2px #ffd700;
+    transform: scale(1.08);
+  }
   .winner-cards-display .card .rank { font-size: 0.65rem; }
   .winner-cards-display .card .suit { font-size: 0.7rem; }
   .winner-cards-display .card .center-suit { font-size: 1.2rem; }
@@ -1765,11 +1769,11 @@ function shuffle(arr) {
   return a;
 }
 
-function cardEl(card, hidden=false) {
+function cardEl(card, hidden=false, extraClass='') {
   const el = document.createElement('div');
   if (!card || hidden) { el.className = 'card back'; return el; }
   const isRed = card.s === '♥' || card.s === '♦';
-  el.className = `card ${isRed ? 'red' : 'black'}`;
+  el.className = `card ${isRed ? 'red' : 'black'}${extraClass ? ' ' + extraClass : ''}`;
   el.innerHTML = `<span class="rank">${card.r}</span><span class="center-suit">${card.s}</span><span class="suit">${card.s}</span>`;
   return el;
 }
@@ -1816,14 +1820,14 @@ function rankCards(cards) {
 }
 
 function best5(cards) {
-  if (cards.length < 5) return { rank:-1, name:'—', tb:[] };
-  let best = null;
+  if (cards.length < 5) return { rank:-1, name:'—', tb:[], cards:[] };
+  let best = null, bestCombo = null;
   const combos = getCombos(cards, 5);
   for (const combo of combos) {
     const r = rankCards(combo);
-    if (!best || r.rank > best.rank || (r.rank===best.rank && compareTb(r.tb,best.tb)>0)) best = r;
+    if (!best || r.rank > best.rank || (r.rank===best.rank && compareTb(r.tb,best.tb)>0)) { best = r; bestCombo = combo; }
   }
-  return best;
+  return { ...best, cards: bestCombo || [] };
 }
 function getCombos(arr, k) {
   if (k===0) return [[]];
@@ -2829,7 +2833,7 @@ function advanceTurn(gs) {
   if (notFolded.length === 1) {
     const winner = gs.players[notFolded[0]];
     winner.stack += gs.pot;
-    gs.winner = { id: winner.id, name: winner.name, handName: 'Everyone folded', pot: gs.pot };
+    gs.winner = { id: winner.id, name: winner.name, handName: 'Everyone folded', pot: gs.pot, cards: [] };
     gs.stage = 'showdown';
     return;
   }
@@ -2899,7 +2903,7 @@ function doShowdown(gs) {
   const winner = findWinner(notFolded, gs.community);
   if (winner) {
     gs.players[winner.id].stack += gs.pot;
-    gs.winner = { id: winner.id, name: winner.name, handName: winner.handResult?.name || '—', hand: winner.hand, pot: gs.pot };
+    gs.winner = { id: winner.id, name: winner.name, handName: winner.handResult?.name || '—', hand: winner.hand, pot: gs.pot, cards: winner.handResult?.cards || [] };
   }
 }
 
@@ -2923,16 +2927,17 @@ async function showWinner(gs) {
     cardsArea.style.display = 'block';
     const holeArea = document.getElementById('winner-hole-cards');
     const commArea = document.getElementById('winner-community-cards');
+    const win = (c, def) => w.cards?.some(wc => wc.r === c.r && wc.s === c.s) ? 'winning-card' : def;
     if (holeArea) {
       holeArea.innerHTML = '';
-      holeArea.appendChild(cardEl(w.hand[0]));
-      holeArea.appendChild(cardEl(w.hand[1]));
+      holeArea.appendChild(cardEl(w.hand[0], false, win(w.hand[0], '')));
+      holeArea.appendChild(cardEl(w.hand[1], false, win(w.hand[1], '')));
     }
     if (commArea) {
       commArea.innerHTML = '';
       if (gs.community && gs.community.length > 0) {
         commArea.parentElement.style.display = 'block';
-        for (const c of gs.community) commArea.appendChild(cardEl(c));
+        for (const c of gs.community) commArea.appendChild(cardEl(c, false, win(c, '')));
       } else {
         commArea.parentElement.style.display = 'none';
       }
