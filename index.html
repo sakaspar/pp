@@ -1,0 +1,2963 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Poker Night — Texas Hold'em</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=Inter:wght@300;400;500;600&family=Space+Mono:wght@400;700&display=swap');
+
+  :root {
+    --felt: #1a3a2a;
+    --felt-light: #204535;
+    --felt-mid: #162f22;
+    --gold: #c8a84b;
+    --gold-light: #e2c77a;
+    --gold-dim: #7a6630;
+    --cream: #f5f0e8;
+    --card-bg: #fdfaf5;
+    --card-border: #e8e0cc;
+    --red: #c0392b;
+    --red-bright: #e74c3c;
+    --chip-white: #f0ede8;
+    --chip-red: #d63031;
+    --chip-blue: #2d3a8c;
+    --chip-green: #27ae60;
+    --chip-black: #1a1a1a;
+    --text-primary: #f5f0e8;
+    --text-dim: #a89a72;
+    --text-dark: #1a1a1a;
+    --shadow-deep: 0 8px 32px rgba(0,0,0,0.6);
+    --shadow-card: 0 4px 16px rgba(0,0,0,0.5);
+    --glow-gold: 0 0 20px rgba(200,168,75,0.4);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: #0d1f14;
+    color: var(--text-primary);
+    min-height: 100vh;
+    overflow: hidden;
+  }
+
+  /* ── LOBBY ── */
+  #lobby {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    background: radial-gradient(ellipse at 50% 30%, #1a3a2a 0%, #0d1f14 70%);
+    gap: 0;
+  }
+
+  .logo {
+    font-family: 'Playfair Display', serif;
+    font-size: 3.2rem;
+    font-weight: 900;
+    color: var(--gold);
+    letter-spacing: 0.04em;
+    text-shadow: var(--glow-gold);
+    margin-bottom: 4px;
+  }
+  .logo span { color: var(--cream); }
+  .tagline {
+    font-size: 0.78rem;
+    font-weight: 500;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-bottom: 32px;
+  }
+
+  .lobby-card {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(200,168,75,0.18);
+    border-radius: 16px;
+    padding: 32px 40px;
+    width: 440px;
+    backdrop-filter: blur(8px);
+    box-shadow: var(--shadow-deep);
+  }
+
+  .lobby-card h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.3rem;
+    color: var(--gold-light);
+    margin-bottom: 20px;
+    font-weight: 700;
+    text-align: center;
+  }
+
+  .field-group { margin-bottom: 18px; }
+  .field-group label {
+    display: block;
+    font-size: 0.7rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-bottom: 7px;
+    font-weight: 500;
+  }
+  .field-group input, .field-group select {
+    width: 100%;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(200,168,75,0.2);
+    border-radius: 8px;
+    padding: 11px 14px;
+    color: var(--cream);
+    font-size: 0.95rem;
+    font-family: 'Inter', sans-serif;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  .field-group input:focus, .field-group select:focus {
+    border-color: var(--gold);
+    box-shadow: 0 0 0 2px rgba(200,168,75,0.15);
+  }
+
+  .btn {
+    width: 100%;
+    padding: 13px;
+    border: none;
+    border-radius: 8px;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.18s;
+  }
+  .btn-gold {
+    background: linear-gradient(135deg, #c8a84b, #e2c77a, #c8a84b);
+    color: #1a1200;
+    box-shadow: 0 2px 12px rgba(200,168,75,0.35);
+  }
+  .btn-gold:hover { transform: translateY(-1px); box-shadow: 0 4px 20px rgba(200,168,75,0.5); }
+  .btn-outline {
+    background: transparent;
+    border: 1px solid rgba(200,168,75,0.35);
+    color: var(--gold-light);
+    margin-top: 10px;
+  }
+  .btn-outline:hover { background: rgba(200,168,75,0.08); border-color: var(--gold); }
+  .btn:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
+  .btn-google {
+    background: #fff;
+    color: #1f1f1f;
+    border: 1px solid rgba(255,255,255,0.12);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+  }
+  .btn-google:hover { transform: translateY(-1px); box-shadow: 0 4px 18px rgba(255,255,255,0.12); }
+
+  .auth-card {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(200,168,75,0.16);
+    border-radius: 12px;
+    padding: 14px;
+    margin-bottom: 18px;
+  }
+  .auth-profile {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .auth-avatar, .seat-avatar, .waiting-avatar {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid rgba(200,168,75,0.35);
+    background: rgba(255,255,255,0.08);
+    flex-shrink: 0;
+  }
+  .seat-avatar {
+    width: 36px;
+    height: 36px;
+  }
+  .waiting-avatar {
+    width: 28px;
+    height: 28px;
+  }
+  .auth-profile-meta {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .auth-profile-name {
+    font-size: 0.92rem;
+    font-weight: 600;
+    color: var(--cream);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .auth-profile-sub {
+    font-size: 0.72rem;
+    color: var(--text-dim);
+    line-height: 1.4;
+  }
+  .auth-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 12px;
+  }
+  .auth-actions .btn {
+    margin: 0;
+  }
+  .balance-panel {
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid rgba(200,168,75,0.1);
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .balance-line {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    font-size: 0.78rem;
+    color: var(--text-dim);
+  }
+  .balance-line strong {
+    color: var(--gold-light);
+    font-family: 'Space Mono', monospace;
+  }
+  .mini-note {
+    font-size: 0.72rem;
+    color: var(--text-dim);
+    line-height: 1.45;
+  }
+  .auth-setup-banner {
+    display: none;
+    margin-bottom: 14px;
+    padding: 12px 14px;
+    border-radius: 10px;
+    border: 1px solid rgba(231, 76, 60, 0.45);
+    background: rgba(231, 76, 60, 0.12);
+    color: #ffb4b4;
+    font-size: 0.78rem;
+    line-height: 1.5;
+  }
+  .auth-setup-banner.show { display: block; }
+  .auth-setup-banner strong { color: #ffd0d0; }
+  .compact-btn {
+    width: auto;
+    padding: 10px 12px;
+    font-size: 0.72rem;
+  }
+
+  .divider {
+    display: flex; align-items: center; gap: 12px;
+    margin: 20px 0;
+    color: var(--text-dim); font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+  .divider::before, .divider::after {
+    content: ''; flex: 1; height: 1px;
+    background: rgba(200,168,75,0.15);
+  }
+
+  /* ── TABLE BROWSER ELEMENTS ── */
+  #active-rooms-list {
+    list-style: none;
+    max-height: 125px;
+    overflow-y: auto;
+    margin-bottom: 10px;
+    scrollbar-width: thin;
+    scrollbar-color: var(--gold-dim) transparent;
+  }
+  #active-rooms-list li {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(200,168,75,0.1);
+    border-radius: 8px;
+    margin-bottom: 6px;
+  }
+  .room-info { display: flex; flex-direction: column; gap: 2px; }
+  .room-meta { font-size: 0.72rem; color: var(--text-dim); }
+  .btn-mini-join {
+    padding: 5px 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    border-radius: 6px;
+    border: 1px solid var(--gold);
+    background: transparent;
+    color: var(--gold-light);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .btn-mini-join:hover { background: var(--gold); color: #1a1200; }
+  .no-rooms { text-align: center; font-size: 0.8rem; color: var(--text-dim); padding: 12px 0; }
+
+  #room-code-display {
+    background: rgba(200,168,75,0.08);
+    border: 1px solid rgba(200,168,75,0.3);
+    border-radius: 8px;
+    padding: 14px;
+    text-align: center;
+    font-family: 'Space Mono', monospace;
+    font-size: 1.8rem;
+    letter-spacing: 0.18em;
+    color: var(--gold);
+    margin: 10px 0 20px;
+    display: none;
+  }
+
+  #lobby-status {
+    text-align: center;
+    font-size: 0.8rem;
+    color: var(--text-dim);
+    margin-top: 14px;
+    min-height: 20px;
+  }
+
+  /* ── WAITING ROOM ── */
+  #waiting-room {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    background: radial-gradient(ellipse at 50% 30%, #1a3a2a 0%, #0d1f14 70%);
+    gap: 20px;
+    padding: 40px;
+  }
+  .waiting-card {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(200,168,75,0.18);
+    border-radius: 16px;
+    padding: 36px 44px;
+    min-width: 400px;
+    max-width: 500px;
+    backdrop-filter: blur(8px);
+    box-shadow: var(--shadow-deep);
+  }
+  .waiting-card h2 {
+    font-family: 'Playfair Display', serif;
+    color: var(--gold);
+    font-size: 1.4rem;
+    margin-bottom: 6px;
+    text-align: center;
+  }
+  #room-code-show {
+    text-align: center;
+    font-family: 'Space Mono', monospace;
+    font-size: 2rem;
+    color: var(--gold-light);
+    letter-spacing: 0.2em;
+    margin: 14px 0;
+    text-shadow: var(--glow-gold);
+  }
+  .share-hint { text-align:center; font-size:0.75rem; color:var(--text-dim); margin-bottom: 20px; }
+  #player-list { list-style: none; margin: 16px 0; }
+  #player-list li {
+    padding: 9px 14px;
+    border-radius: 8px;
+    background: rgba(255,255,255,0.04);
+    margin-bottom: 6px;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  #player-list li .dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--gold); display: inline-block; flex-shrink: 0;
+  }
+  #player-list li .host-badge {
+    font-size: 0.65rem; letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--gold-dim);
+    background: rgba(200,168,75,0.12);
+    padding: 2px 7px;
+    border-radius: 4px;
+    margin-left: auto;
+  }
+  #start-game-btn { display: none; margin-top: 16px; }
+  #waiting-status { text-align:center; color:var(--text-dim); font-size:0.8rem; margin-top:10px; }
+
+  /* ── GAME TABLE ── */
+  #game-table {
+    display: none;
+    width: 100vw;
+    height: 100vh;
+    background: #0d1f14;
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* Felt table oval */
+  .table-felt {
+    position: absolute;
+    left: 50%; top: 50%;
+    transform: translate(-50%, -50%);
+    width: 840px;
+    height: 460px;
+    background: radial-gradient(ellipse at 50% 40%, #256b47 0%, #1a4d34 40%, #143d28 100%);
+    border-radius: 210px;
+    border: 14px solid #2c1a08;
+    box-shadow:
+      0 0 0 6px #5a3a10,
+      0 0 0 10px #2c1a08,
+      var(--shadow-deep),
+      inset 0 2px 40px rgba(0,0,0,0.35);
+  }
+
+  .table-felt::before {
+    content: '';
+    position: absolute;
+    inset: 18px;
+    border-radius: 200px;
+    border: 1px solid rgba(255,255,255,0.06);
+    pointer-events: none;
+  }
+
+  /* Community cards zone */
+  #community-area {
+    position: absolute;
+    left: 50%; top: 50%;
+    transform: translate(-50%, -50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    z-index: 10;
+  }
+  #community-cards {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    min-height: 90px;
+  }
+  #pot-display {
+    font-family: 'Space Mono', monospace;
+    font-size: 1rem;
+    color: var(--gold);
+    text-align: center;
+    text-shadow: var(--glow-gold);
+    background: rgba(0,0,0,0.35);
+    padding: 5px 18px;
+    border-radius: 20px;
+    border: 1px solid rgba(200,168,75,0.2);
+    letter-spacing: 0.05em;
+  }
+
+  /* Playing Cards */
+  .card {
+    width: 76px;
+    height: 108px;
+    background: var(--card-bg);
+    border-radius: 8px;
+    border: 1px solid var(--card-border);
+    box-shadow: var(--shadow-card);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    font-family: 'Space Mono', monospace;
+    font-weight: 700;
+    position: relative;
+    transition: transform 0.2s;
+    flex-shrink: 0;
+    user-select: none;
+  }
+  .card.red { color: var(--red); }
+  .card.black { color: #1a1a1a; }
+  .card .rank { font-size: 1rem; position: absolute; top: 5px; left: 6px; line-height: 1; }
+  .card .suit { font-size: 1.2rem; position: absolute; bottom: 5px; right: 6px; line-height: 1; }
+  .card .center-suit { font-size: 2rem; }
+  .card.back {
+    background: linear-gradient(135deg, #1a3a8c 0%, #12266b 100%);
+    border-color: #2a4aac;
+  }
+  .card.back::after {
+    content: '🂠';
+    font-size: 2rem;
+    filter: brightness(0.7);
+  }
+  .card.placeholder {
+    background: rgba(255,255,255,0.06);
+    border: 2px dashed rgba(200,168,75,0.25);
+    box-shadow: none;
+  }
+  .card.highlighted { box-shadow: 0 0 0 2px var(--gold), var(--shadow-card); }
+
+  /* Player seats */
+  .player-seat {
+    position: absolute;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    z-index: 20;
+    transition: all 0.3s;
+  }
+  .seat-info {
+    background: rgba(13,31,20,0.9);
+    border: 1px solid rgba(200,168,75,0.2);
+    border-radius: 10px;
+    padding: 6px 14px;
+    text-align: center;
+    min-width: 110px;
+    backdrop-filter: blur(6px);
+    box-shadow: var(--shadow-deep);
+    transition: border-color 0.3s, box-shadow 0.3s;
+  }
+  .seat-header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-bottom: 4px;
+  }
+  .seat-info.active-turn {
+    border-color: var(--gold);
+    box-shadow: 0 0 14px rgba(200,168,75,0.5), var(--shadow-deep);
+  }
+  .seat-bankroll {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.62rem;
+    color: var(--text-dim);
+  }
+  .seat-info.folded { opacity: 0.45; }
+  .seat-info.eliminated { opacity: 0.3; }
+  .seat-name {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--cream);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 90px;
+  }
+  .seat-stack {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--gold);
+  }
+  .seat-bet {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--text-dim);
+  }
+  .seat-status-badge {
+    font-size: 0.6rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 2px 6px;
+    border-radius: 4px;
+    background: rgba(200,168,75,0.15);
+    color: var(--gold-dim);
+  }
+  .seat-status-badge.dealer { background: rgba(200,168,75,0.25); color: var(--gold); }
+  .seat-status-badge.folded-badge { background: rgba(180,0,0,0.18); color: #e07070; }
+
+  /* EMPTY INTERACTIVE SEATS */
+  .seat-empty-clickable {
+    background: rgba(0, 0, 0, 0.4);
+    border: 2px dashed rgba(200, 168, 75, 0.3);
+    border-radius: 12px;
+    padding: 12px;
+    min-width: 110px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+  }
+  .seat-empty-clickable:hover {
+    border-color: var(--gold-light);
+    background: rgba(200, 168, 75, 0.12);
+    box-shadow: 0 0 12px rgba(200, 168, 75, 0.3);
+  }
+  .seat-empty-clickable span {
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-dim);
+    pointer-events: none;
+  }
+  .seat-empty-clickable:hover span {
+    color: var(--gold-light);
+  }
+
+  .seat-cards {
+    display: flex;
+    gap: 4px;
+    justify-content: center;
+  }
+  .seat-cards .card {
+    width: 48px;
+    height: 68px;
+    font-size: 0.85rem;
+    border-radius: 6px;
+  }
+  .seat-cards .card .rank { font-size: 0.7rem; top: 3px; left: 4px; }
+  .seat-cards .card .suit { font-size: 0.75rem; bottom: 3px; right: 4px; }
+  .seat-cards .card .center-suit { font-size: 1.1rem; }
+
+  /* Dealer button */
+  .dealer-btn {
+    position: absolute;
+    width: 22px; height: 22px;
+    background: var(--gold);
+    color: #1a1200;
+    border-radius: 50%;
+    font-size: 0.55rem;
+    font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    z-index: 30;
+    box-shadow: 0 2px 8px rgba(200,168,75,0.6);
+    letter-spacing: 0;
+    line-height: 1;
+  }
+
+  /* HUD top-left */
+  #hud {
+    position: absolute;
+    left: 16px;
+    top: 16px;
+    z-index: 110;
+    background: rgba(13,31,20,0.85);
+    border: 1px solid rgba(200,168,75,0.14);
+    border-radius: 10px;
+    padding: 12px 16px;
+    backdrop-filter: blur(6px);
+    width: 220px;
+  }
+  #hud h4 {
+    font-size: 0.65rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-bottom: 8px;
+  }
+  #hud-round { font-size: 0.75rem; color: var(--cream); }
+  #hud-stage {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.8rem;
+    color: var(--gold);
+    margin-top: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+  #hud-my-stack { font-family: 'Space Mono', monospace; font-size: 1rem; color: var(--gold-light); margin-top: 6px; }
+
+  /* ── ACTION SIDEBAR ── */
+  #action-panel {
+    position: absolute;
+    top: 156px;
+    left: 16px;
+    display: none;
+    flex-direction: column;
+    gap: 12px;
+    z-index: 40;
+    background: rgba(13,31,20,0.95);
+    border: 1px solid rgba(200,168,75,0.25);
+    border-radius: 14px;
+    padding: 14px;
+    backdrop-filter: blur(10px);
+    box-shadow: var(--shadow-deep);
+    width: 220px;
+  }
+  #action-panel.show { display: flex; }
+
+  #action-info {
+    font-size: 0.72rem;
+    color: var(--text-dim);
+    text-align: center;
+    font-family: 'Space Mono', monospace;
+    line-height: 1.4;
+    border-bottom: 1px solid rgba(200,168,75,0.1);
+    padding-bottom: 8px;
+  }
+
+  .action-row { 
+    display: flex; 
+    flex-direction: column; 
+    gap: 6px; 
+    width: 100%; 
+  }
+
+  .action-btn {
+    width: 100%;
+    padding: 10px;
+    border-radius: 8px;
+    border: none;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .action-btn:hover { transform: translateY(-1px); }
+  .btn-fold { background: rgba(180,0,0,0.2); color: #e07070; border: 1px solid rgba(180,0,0,0.4); }
+  .btn-fold:hover { background: rgba(180,0,0,0.35); }
+  .btn-check { background: rgba(39,174,96,0.18); color: #6ee09b; border: 1px solid rgba(39,174,96,0.35); }
+  .btn-check:hover { background: rgba(39,174,96,0.3); }
+  .btn-call { background: rgba(45,58,140,0.3); color: #8899ee; border: 1px solid rgba(45,58,140,0.5); }
+  .btn-call:hover { background: rgba(45,58,140,0.5); }
+  .btn-raise { background: linear-gradient(135deg, #c8a84b, #e2c77a); color: #1a1200; }
+  .btn-raise:hover { box-shadow: 0 2px 12px rgba(200,168,75,0.4); }
+  .btn-allin { background: linear-gradient(135deg, #8b0000, #c0392b); color: #ffd; border: none; }
+  .btn-allin:hover { box-shadow: 0 2px 14px rgba(192,57,43,0.5); }
+
+  .raise-row { 
+    display: flex; 
+    flex-direction: column; 
+    gap: 8px; 
+    width: 100%;
+    border-top: 1px solid rgba(200,168,75,0.1);
+    padding-top: 10px;
+  }
+  .raise-row input {
+    width: 100%;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(200,168,75,0.22);
+    border-radius: 7px;
+    padding: 8px;
+    color: var(--cream);
+    font-family: 'Space Mono', monospace;
+    font-size: 0.85rem;
+    text-align: center;
+    outline: none;
+  }
+  .raise-row input:focus { border-color: var(--gold); }
+  
+  .raise-presets { 
+    display: grid; 
+    grid-template-columns: repeat(2, 1fr); 
+    gap: 4px; 
+    width: 100%;
+  }
+  .preset-btn {
+    padding: 6px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(200,168,75,0.15);
+    border-radius: 6px;
+    color: var(--text-dim);
+    font-size: 0.75rem;
+    font-weight: 600;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.15s;
+  }
+  .preset-btn:hover { background: rgba(200,168,75,0.12); color: var(--gold); border-color: var(--gold-dim); }
+
+  /* Game log */
+  #game-log {
+    position: absolute;
+    right: 16px;
+    top: 16px;
+    width: 220px;
+    max-height: 280px;
+    background: rgba(13,31,20,0.85);
+    border: 1px solid rgba(200,168,75,0.14);
+    border-radius: 10px;
+    padding: 12px;
+    overflow-y: auto;
+    z-index: 30;
+    backdrop-filter: blur(6px);
+    scrollbar-width: thin;
+    scrollbar-color: var(--gold-dim) transparent;
+  }
+  #game-log h4 {
+    font-size: 0.65rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-bottom: 8px;
+    border-bottom: 1px solid rgba(200,168,75,0.1);
+    padding-bottom: 6px;
+  }
+  .log-entry {
+    font-size: 0.72rem;
+    color: var(--text-dim);
+    padding: 3px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    line-height: 1.4;
+  }
+  .log-entry.highlight { color: var(--gold-light); }
+  .log-entry.win { color: #6ee09b; }
+
+  /* Winner overlay */
+  #winner-overlay {
+    display: none;
+    position: absolute;
+    inset: 0;
+    background: rgba(13,31,20,0.88);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(4px);
+  }
+  #winner-overlay.show { display: flex; }
+  .winner-card {
+    background: rgba(13,31,20,0.97);
+    border: 2px solid var(--gold);
+    border-radius: 20px;
+    padding: 44px 56px;
+    text-align: center;
+    box-shadow: var(--shadow-deep), var(--glow-gold);
+    max-width: 480px;
+  }
+  .winner-card h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 2.2rem;
+    color: var(--gold);
+    margin-bottom: 8px;
+    text-shadow: var(--glow-gold);
+  }
+  .winner-card .winner-name {
+    font-size: 1.3rem;
+    color: var(--cream);
+    font-weight: 600;
+    margin-bottom: 6px;
+  }
+  .winner-card .winner-hand {
+    font-size: 0.85rem;
+    color: var(--text-dim);
+    letter-spacing: 0.06em;
+    margin-bottom: 20px;
+  }
+  .winner-card .winner-pot {
+    font-family: 'Space Mono', monospace;
+    font-size: 1.5rem;
+    color: #6ee09b;
+    margin-bottom: 24px;
+  }
+  .winner-cards-display { display: flex; gap: 8px; justify-content: center; margin-bottom: 22px; }
+  #next-hand-btn { width: 100%; }
+
+  /* Toast notifications */
+  #toast-container {
+    position: absolute;
+    bottom: 180px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 200;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    pointer-events: none;
+  }
+  .toast {
+    background: rgba(13,31,20,0.95);
+    border: 1px solid rgba(200,168,75,0.3);
+    border-radius: 8px;
+    padding: 10px 20px;
+    font-size: 0.82rem;
+    color: var(--gold-light);
+    text-align: center;
+    animation: toast-in 0.2s ease, toast-out 0.3s ease 2.5s forwards;
+    backdrop-filter: blur(6px);
+  }
+  @keyframes toast-in { from { opacity:0; transform: translateY(10px); } to { opacity:1; transform: translateY(0); } }
+  @keyframes toast-out { from { opacity:1; } to { opacity:0; } }
+
+  /* Hand result cards in winner panel */
+  .winner-cards-display .card {
+    width: 60px; height: 84px;
+    font-size: 0.85rem;
+  }
+  .winner-cards-display .card .rank { font-size: 0.65rem; }
+  .winner-cards-display .card .suit { font-size: 0.7rem; }
+  .winner-cards-display .card .center-suit { font-size: 1.2rem; }
+
+  /* Turn timer */
+  #turn-timer {
+    position: absolute;
+    top: 16px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: 'Space Mono', monospace;
+    font-size: 1.1rem;
+    color: var(--gold);
+    background: rgba(13,31,20,0.85);
+    border: 1px solid rgba(200,168,75,0.25);
+    border-radius: 24px;
+    padding: 8px 24px;
+    z-index: 30;
+    display: none;
+    backdrop-filter: blur(6px);
+    box-shadow: var(--shadow-deep);
+  }
+  #turn-timer.urgent { color: var(--red-bright); border-color: rgba(192,57,43,0.5); }
+
+  /* Scrollbar for log */
+  #game-log::-webkit-scrollbar { width: 4px; }
+  #game-log::-webkit-scrollbar-track { background: transparent; }
+  #game-log::-webkit-scrollbar-thumb { background: var(--gold-dim); border-radius: 2px; }
+
+  @keyframes dealCard {
+    0% { transform: translateY(-120px) rotate(-15deg) scale(0.4); opacity: 0; filter: blur(2px); }
+    100% { transform: translateY(0) rotate(0deg) scale(1); opacity: 1; filter: blur(0); }
+  }
+  .card.deal-animate {
+    animation: dealCard 0.45s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+  }
+
+  .chip-anim-token {
+    position: fixed;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    border: 2px dashed rgba(255, 255, 255, 0.75);
+    box-shadow: 0 3px 8px rgba(0,0,0,0.6), inset 0 0 4px rgba(0,0,0,0.5);
+    z-index: 9999;
+    pointer-events: none;
+    transition: all 0.65s cubic-bezier(0.25, 1, 0.5, 1);
+  }
+
+  /* Copy button */
+  .copy-code-btn {
+    background: rgba(200,168,75,0.12);
+    border: 1px solid rgba(200,168,75,0.3);
+    color: var(--gold-light);
+    padding: 6px 14px;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+  .copy-code-btn:hover {
+    background: var(--gold);
+    color: #1a1200;
+  }
+
+  /* Connection indicator */
+  .connection-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    display: inline-block;
+    margin-right: 6px;
+    vertical-align: middle;
+  }
+  .connection-dot.online { background: #27ae60; box-shadow: 0 0 6px rgba(39,174,96,0.6); }
+  .connection-dot.offline { background: #e74c3c; box-shadow: 0 0 6px rgba(231,76,60,0.6); }
+  #connection-status {
+    font-size: 0.68rem;
+    color: var(--text-dim);
+    margin-top: 8px;
+    padding-top: 6px;
+    border-top: 1px solid rgba(200,168,75,0.1);
+  }
+
+  /* Range slider */
+  .raise-slider {
+    width: 100%;
+    -webkit-appearance: none;
+    appearance: none;
+    height: 4px;
+    background: rgba(200,168,75,0.2);
+    border-radius: 2px;
+    outline: none;
+  }
+  .raise-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 16px; height: 16px;
+    border-radius: 50%;
+    background: var(--gold);
+    cursor: pointer;
+    box-shadow: 0 0 6px rgba(200,168,75,0.5);
+  }
+  .raise-slider::-moz-range-thumb {
+    width: 16px; height: 16px;
+    border-radius: 50%;
+    background: var(--gold);
+    cursor: pointer;
+    border: none;
+  }
+
+  /* Turn notification pulse */
+  @keyframes turnPulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(200,168,75,0.6); }
+    50% { box-shadow: 0 0 0 12px rgba(200,168,75,0); }
+  }
+  .your-turn-pulse {
+    animation: turnPulse 1.5s ease-in-out infinite;
+  }
+
+  /* Responsive */
+  @media (max-width: 900px) {
+    .table-felt { width: 96vw; height: 58vh; border-width: 8px; }
+    .lobby-card { width: 92vw; max-width: 440px; padding: 24px; }
+    .waiting-card { min-width: auto; width: 92vw; max-width: 460px; padding: 24px; }
+    #hud { width: 160px; padding: 8px 10px; }
+    #game-log { width: 160px; padding: 8px; }
+    #action-panel { width: 180px; }
+    .seat-info { min-width: 80px; padding: 4px 8px; }
+    .seat-name { font-size: 0.68rem; max-width: 65px; }
+    .seat-cards .card { width: 28px; height: 40px; }
+  }
+  @media (max-width: 600px) {
+    .table-felt { width: 98vw; height: 54vh; border-width: 5px; border-radius: 140px; }
+    #hud { left: 4px; top: 4px; width: 140px; font-size: 0.85em; }
+    #game-log { right: 4px; top: 4px; width: 130px; max-height: 180px; }
+    #action-panel { left: 4px; top: 120px; width: 160px; padding: 8px; }
+    .card { width: 54px; height: 76px; }
+    .seat-cards .card { width: 36px; height: 52px; }
+    .winner-cards-display .card { width: 44px; height: 62px; }
+    .logo { font-size: 2.2rem; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ══ LOBBY ══ -->
+<div id="lobby">
+  <div class="logo">♠ Poker <span>Night</span></div>
+  <div class="tagline">Texas Hold'em · Live Multiplayer</div>
+
+  <div class="lobby-card">
+    <h2>Take a Seat</h2>
+
+    <div class="auth-card">
+      <div class="auth-setup-banner" id="auth-setup-banner">
+        <strong>Google sign-in is not enabled in Firebase.</strong>
+        Open Firebase Console → Authentication → Sign-in method → enable <strong>Google</strong>.
+        Then add your <strong>GitHub Pages URL (your-username.github.io/repo-name)</strong> under Authorized domains.
+      </div>
+      <button class="btn btn-google" id="google-signin-btn" type="button">
+        <span>G</span>
+        <span>Continue with Google</span>
+      </button>
+      <div id="auth-profile" style="display:none;">
+        <div class="auth-profile">
+          <img id="auth-avatar" class="auth-avatar" alt="Google profile photo">
+          <div class="auth-profile-meta">
+            <div class="auth-profile-name" id="auth-name">Signed in</div>
+            <div class="auth-profile-sub" id="auth-email"></div>
+          </div>
+        </div>
+        <div class="balance-panel">
+          <div class="balance-line"><span>Total bankroll</span><strong id="auth-total-balance">$0</strong></div>
+          <div class="balance-line"><span>Wallet cash</span><strong id="auth-wallet-balance">$0</strong></div>
+          <div class="balance-line"><span>At the table</span><strong id="auth-table-stack">$0</strong></div>
+          <div class="mini-note" id="auth-balance-note">Each Google account starts with $5,000 and keeps its bankroll in Firebase.</div>
+          <button class="btn btn-gold compact-btn" id="claim-bankroll-btn" style="display:none;">Claim Another $5,000</button>
+        </div>
+        <div class="auth-actions">
+          <button class="btn btn-outline compact-btn" id="google-signout-btn">Sign Out</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="field-group">
+      <label>Your Name</label>
+      <input type="text" id="player-name" placeholder="Sign in with Google" maxlength="16" autocomplete="off" readonly>
+    </div>
+
+    <p class="mini-note" style="margin-bottom:14px;text-align:center;">Every table uses a fixed <strong style="color:var(--gold-light);">$1,000</strong> buy-in from your bankroll.</p>
+
+    <button class="btn btn-gold" id="create-btn" disabled>Create Table</button>
+
+    <div id="room-code-display"></div>
+
+    <!-- Live Table List -->
+    <div class="divider">Available Tables</div>
+    <ul id="active-rooms-list">
+      <div class="no-rooms">Scanning for active tables…</div>
+    </ul>
+
+    <div class="divider">or enter room code</div>
+
+    <div class="field-group">
+      <input type="text" id="join-code" placeholder="e.g. XK92" maxlength="4" autocomplete="off"
+             style="text-transform:uppercase; letter-spacing:0.14em; font-family:'Space Mono',monospace; font-size:1.1rem; text-align: center;">
+    </div>
+    <button class="btn btn-outline" id="join-btn" disabled>Join Table</button>
+
+    <div id="lobby-status"></div>
+  </div>
+</div>
+
+<!-- ══ WAITING ROOM ══ -->
+<div id="waiting-room">
+  <div class="waiting-card">
+    <h2>Waiting for Players…</h2>
+    <div id="room-code-show"></div>
+    <p class="share-hint">Share this code with friends to join</p>
+    <div style="text-align:center;margin-bottom:14px;">
+      <button class="copy-code-btn" id="copy-code-btn">📋 Copy Code</button>
+    </div>
+    <ul id="player-list"></ul>
+    <button class="btn btn-gold" id="start-game-btn">Start Game</button>
+    <button class="btn btn-outline" id="leave-waiting-btn" style="margin-top:8px;">Leave Table</button>
+    <div id="waiting-status">Waiting for at least 2 players…</div>
+  </div>
+</div>
+
+<!-- ══ GAME TABLE ══ -->
+<div id="game-table">
+  <div class="table-felt" id="table-felt"></div>
+
+  <!-- HUD -->
+  <div id="hud">
+    <h4>Hand Info</h4>
+    <div id="hud-round">Hand #1</div>
+    <div id="hud-stage">Pre-Flop</div>
+    <div id="hud-my-stack">👁 Spectating Table</div>
+    <div id="hud-bankroll" style="margin-top:6px;font-size:0.75rem;color:var(--text-dim);">Bankroll: $0</div>
+    <div id="hud-pending" style="display:none;margin-top:6px;font-size:0.7rem;color:#7a6630;border-top:1px solid rgba(200,168,75,0.1);padding-top:6px;"></div>
+    <button class="btn btn-gold compact-btn" id="hud-claim-btn" style="display:none;margin-top:8px;">Claim Another $5,000</button>
+    <div id="connection-status"><span class="connection-dot online"></span>Connected</div>
+  </div>
+
+  <!-- Action Panel -->
+  <div id="action-panel">
+    <div id="action-info">Your turn</div>
+    <div class="action-row" id="main-actions">
+      <button class="action-btn btn-fold" id="btn-fold">Fold</button>
+      <button class="action-btn btn-check" id="btn-check">Check</button>
+      <button class="action-btn btn-call" id="btn-call">Call $0</button>
+      <button class="action-btn btn-allin" id="btn-allin">All-In</button>
+    </div>
+    <div class="raise-row">
+      <div class="raise-presets" id="raise-presets"></div>
+      <input type="range" class="raise-slider" id="raise-slider" min="0" max="1000" value="0">
+      <input type="number" id="raise-amount" placeholder="Amount" min="0">
+      <button class="action-btn btn-raise" id="btn-raise">Raise</button>
+    </div>
+  </div>
+
+  <!-- Turn timer -->
+  <div id="turn-timer">⏱ 30s</div>
+
+  <!-- Community cards + pot -->
+  <div id="community-area">
+    <div id="pot-display">Pot: $0</div>
+    <div id="community-cards"></div>
+  </div>
+
+  <!-- Game log -->
+  <div id="game-log">
+    <h4>Action Log</h4>
+  </div>
+
+  <!-- Toast notifications -->
+  <div id="toast-container"></div>
+
+  <!-- Winner overlay -->
+  <div id="winner-overlay">
+    <div class="winner-card">
+      <h2>🏆 Winner!</h2>
+      <div class="winner-name" id="winner-name"></div>
+      <div class="winner-hand" id="winner-hand"></div>
+      <div class="winner-cards-display" id="winner-cards-display">
+        <div class="winner-hand-group">
+          <div style="font-size:0.65rem; color:var(--text-dim); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:6px;">Winning Hand</div>
+          <div id="winner-hole-cards" style="display:flex; justify-content:center; gap:6px;"></div>
+        </div>
+        <div class="winner-community-group" style="margin-top:14px;">
+          <div style="font-size:0.65rem; color:var(--text-dim); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:6px;">Community Board</div>
+          <div id="winner-community-cards" style="display:flex; justify-content:center; gap:6px;"></div>
+        </div>
+      </div>
+      <div class="winner-pot" id="winner-pot"></div>
+      <div id="winner-rebuy-area" style="margin-bottom:12px;display:none;">
+        <button class="action-btn btn-raise" style="font-size:0.8rem;padding:8px 16px;" onclick="handleRebuy()">+ Rebuy $1,000 for Next Hand</button>
+      </div>
+      <button class="btn btn-gold" id="next-hand-btn">Next Hand</button>
+    </div>
+  </div>
+</div>
+
+<!-- Firebase Config & App Engine Stack -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-app.js";
+import { initializeAuth, getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, onAuthStateChanged, signOut, browserLocalPersistence, browserPopupRedirectResolver } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-auth.js";
+import { getDatabase, ref, set, get, update, onValue, remove, onDisconnect, runTransaction } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-database.js";
+
+const firebaseConfig = {
+  apiKey: "__FIREBASE_API_KEY__",
+  authDomain: "__FIREBASE_AUTH_DOMAIN__",
+  databaseURL: "__FIREBASE_DATABASE_URL__",
+  projectId: "__FIREBASE_PROJECT_ID__",
+  storageBucket: "__FIREBASE_STORAGE_BUCKET__",
+  messagingSenderId: "__FIREBASE_MESSAGING_SENDER_ID__",
+  appId: "__FIREBASE_APP_ID__",
+  measurementId: "__FIREBASE_MEASUREMENT_ID__"
+};
+const app = initializeApp(firebaseConfig);
+let auth;
+try {
+  auth = initializeAuth(app, {
+    persistence: browserLocalPersistence,
+    popupRedirectResolver: browserPopupRedirectResolver,
+  });
+} catch (e) {
+  auth = getAuth(app);
+}
+const db = getDatabase(app);
+const googleProvider = new GoogleAuthProvider();
+googleProvider.setCustomParameters({ prompt: 'select_account' });
+
+let myId = null;
+let roomCode = null;
+let isHost = false;
+let isSpectator = false;
+let isPending = false;  
+let gameState = null;
+let unsubscribe = null;
+let timerInterval = null;
+let turnEnforcementInterval = null;
+let currentUser = null;
+let userProfile = null;
+let syncInFlight = false;
+let lastAuthUid = null;
+const STARTER_BANKROLL = 5000;
+const TABLE_BUY_IN = 1000;
+
+let prevCommunityCount = 0;
+let prevPot = 0;
+let prevMyTurn = false;
+
+function randomId() { return Math.random().toString(36).substr(2,9); }
+function genRoomCode() { return Math.random().toString(36).substr(2,4).toUpperCase(); }
+function formatMoney(value) {
+  return `$${Number(value || 0).toLocaleString()}`;
+}
+function escapeHtml(value = '') {
+  return String(value).replace(/[&<>"']/g, char => ({
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#39;'
+  }[char]));
+}
+function toast(msg) {
+  const t = document.createElement('div');
+  t.className = 'toast'; t.textContent = msg;
+  document.getElementById('toast-container').appendChild(t);
+  setTimeout(() => t.remove(), 3000);
+}
+function log(msg, cls='') {
+  const log = document.getElementById('game-log');
+  const el = document.createElement('div');
+  el.className = `log-entry ${cls}`;
+  el.textContent = msg;
+  log.appendChild(el);
+  log.scrollTop = log.scrollHeight;
+}
+function setStatus(id, msg) { document.getElementById(id).textContent = msg; }
+function userRef(path = '') {
+  if (!currentUser?.uid) throw new Error('User not signed in');
+  return ref(db, `poker/users/${currentUser.uid}${path}`);
+}
+function getGoogleIdentity(user = currentUser) {
+  if (!user) return null;
+  return {
+    displayName: user.displayName || user.email?.split('@')[0] || 'Player',
+    email: user.email || '',
+    photoURL: user.photoURL || '',
+  };
+}
+function getActiveTableStack(profile = userProfile) {
+  return Number(profile?.activeTable?.stack || 0);
+}
+function getWalletBalance(profile = userProfile) {
+  return Number(profile?.walletBalance || 0);
+}
+function getTotalBankroll(profile = userProfile) {
+  return getWalletBalance(profile) + getActiveTableStack(profile);
+}
+function canClaimStarterBankroll(profile = userProfile) {
+  return getTotalBankroll(profile) <= 0;
+}
+function getSignedInPlayerIdentity() {
+  if (!currentUser) return null;
+  const google = getGoogleIdentity(currentUser);
+  return {
+    displayName: userProfile?.displayName || google.displayName,
+    photoURL: userProfile?.photoURL || google.photoURL,
+    email: userProfile?.email || google.email
+  };
+}
+function validateTableBuyIn() {
+  const wallet = getWalletBalance();
+  if (wallet < TABLE_BUY_IN) {
+    return { ok: false, message: `You need at least ${formatMoney(TABLE_BUY_IN)} in your wallet to join a table.` };
+  }
+  return { ok: true, amount: TABLE_BUY_IN };
+}
+function formatAuthError(err) {
+  const code = err?.code || '';
+  const raw = err?.message || '';
+  if (code === 'auth/operation-not-allowed' || raw.includes('identity provider configuration is not found')) {
+    return 'Google sign-in is NOT enabled in Firebase. Go to Firebase Console → Authentication → Sign-in method → enable Google.';
+  }
+  const messages = {
+    'auth/unauthorized-domain': 'This site is not authorized. Add your GitHub Pages URL in Firebase → Authentication → Settings → Authorized domains.',
+    'auth/popup-blocked': 'Popup blocked by your browser. Allow popups for this site, or use the redirect option below.',
+    'auth/popup-closed-by-user': 'Sign-in cancelled.',
+    'auth/cancelled-popup-request': 'Sign-in cancelled.',
+    'auth/network-request-failed': 'Network error. Check your connection and try again.',
+    'permission-denied': 'Database permission denied. Allow reads/writes under poker/users in Firebase Realtime Database rules.',
+  };
+  return messages[code] || raw || 'Google sign-in failed.';
+}
+function showAuthSetupBanner(show = true) {
+  document.getElementById('auth-setup-banner').classList.toggle('show', show);
+}
+async function checkGoogleProviderConfigured() {
+  try {
+    const res = await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:createAuthUri?key=${firebaseConfig.apiKey}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        providerId: 'google.com',
+        continueUri: window.location.origin + window.location.pathname,
+      })
+    });
+    const data = await res.json().catch(() => ({}));
+    const msg = data?.error?.message || '';
+    if (msg.includes('identity provider configuration is not found') || msg.includes('OPERATION_NOT_ALLOWED')) {
+      showAuthSetupBanner(true);
+      setStatus('lobby-status', 'Google sign-in must be enabled in Firebase Console first.');
+      return false;
+    }
+    showAuthSetupBanner(false);
+    return true;
+  } catch (e) {
+    return true;
+  }
+}
+async function signInWithGoogle(useRedirect = false) {
+  const btn = document.getElementById('google-signin-btn');
+  btn.disabled = true;
+  const providerReady = await checkGoogleProviderConfigured();
+  if (!providerReady) {
+    btn.disabled = false;
+    return;
+  }
+
+  try {
+    if (useRedirect) {
+      setStatus('lobby-status', 'Redirecting to Google…');
+      await signInWithRedirect(auth, googleProvider);
+      return;
+    }
+
+    setStatus('lobby-status', 'Opening Google sign-in…');
+    const credential = await signInWithPopup(auth, googleProvider);
+    await onUserSignedIn(credential.user);
+    setStatus('lobby-status', '');
+    toast('Signed in with Google');
+  } catch (err) {
+    console.error('Google sign-in error:', err);
+    const message = formatAuthError(err);
+    setStatus('lobby-status', message);
+    toast(message);
+
+    if (!useRedirect && ['auth/popup-blocked', 'auth/cancelled-popup-request', 'auth/operation-not-supported-in-this-environment'].includes(err?.code)) {
+      setStatus('lobby-status', 'Popup blocked — trying redirect…');
+      await signInWithGoogle(true);
+      return;
+    }
+
+    if (err?.code === 'auth/operation-not-allowed') {
+      showAuthSetupBanner(true);
+    }
+    btn.disabled = false;
+  }
+}
+function setGameplayButtonsEnabled(enabled) {
+  document.getElementById('create-btn').disabled = !enabled;
+  document.getElementById('join-btn').disabled = !enabled;
+}
+function updateBalanceUI() {
+  const total = formatMoney(getTotalBankroll());
+  const wallet = formatMoney(getWalletBalance());
+  const table = formatMoney(getActiveTableStack());
+  document.getElementById('auth-total-balance').textContent = total;
+  document.getElementById('auth-wallet-balance').textContent = wallet;
+  document.getElementById('auth-table-stack').textContent = table;
+  document.getElementById('hud-bankroll').textContent = `Bankroll: ${total}`;
+
+  const showClaim = !!currentUser && canClaimStarterBankroll();
+  document.getElementById('claim-bankroll-btn').style.display = showClaim ? 'inline-flex' : 'none';
+  document.getElementById('hud-claim-btn').style.display = showClaim ? 'inline-flex' : 'none';
+
+  const noteEl = document.getElementById('auth-balance-note');
+  if (!currentUser) {
+    noteEl.textContent = 'Sign in with Google to get your personal $5,000 bankroll.';
+  } else if (userProfile?.activeTable?.roomCode) {
+    noteEl.textContent = `Active table: ${userProfile.activeTable.roomCode} · ${formatMoney(TABLE_BUY_IN)} buy-in.`;
+  } else {
+    noteEl.textContent = 'Each Google account starts with $5,000. Tables use a $1,000 buy-in.';
+  }
+}
+function updateAuthUI() {
+  const signinBtn = document.getElementById('google-signin-btn');
+  const signoutBtn = document.getElementById('google-signout-btn');
+  const profileCard = document.getElementById('auth-profile');
+  const playerNameInput = document.getElementById('player-name');
+  if (!currentUser) {
+    signinBtn.style.display = 'flex';
+    profileCard.style.display = 'none';
+    signoutBtn.disabled = true;
+    playerNameInput.value = '';
+    playerNameInput.readOnly = true;
+    playerNameInput.placeholder = 'Sign in with Google to continue';
+    setGameplayButtonsEnabled(false);
+    updateBalanceUI();
+    return;
+  }
+
+  const identity = getSignedInPlayerIdentity();
+  signinBtn.style.display = 'none';
+  profileCard.style.display = 'block';
+  signoutBtn.disabled = false;
+  document.getElementById('auth-avatar').src = identity.photoURL || 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect fill="#1a3a2a" width="64" height="64"/><text x="32" y="40" text-anchor="middle" font-size="28" fill="#c8a84b">♠</text></svg>');
+  document.getElementById('auth-name').textContent = identity.displayName;
+  document.getElementById('auth-email').textContent = identity.email;
+  playerNameInput.value = identity.displayName.slice(0, 16);
+  playerNameInput.readOnly = true;
+  playerNameInput.placeholder = 'Pulled from Google';
+  setGameplayButtonsEnabled(true);
+  updateBalanceUI();
+}
+async function onUserSignedIn(user) {
+  if (!user) {
+    lastAuthUid = null;
+    currentUser = null;
+    userProfile = null;
+    updateAuthUI();
+    return;
+  }
+
+  if (user.uid === lastAuthUid && userProfile && currentUser) {
+    updateAuthUI();
+    return;
+  }
+
+  lastAuthUid = user.uid;
+  currentUser = user;
+  const identity = getGoogleIdentity(user);
+
+  // Show Google name/photo immediately — don't wait for database
+  userProfile = {
+    displayName: identity.displayName,
+    email: identity.email,
+    photoURL: identity.photoURL,
+    walletBalance: STARTER_BANKROLL,
+    activeTable: null,
+  };
+  document.getElementById('google-signin-btn').disabled = false;
+  showAuthSetupBanner(false);
+  updateAuthUI();
+  setStatus('lobby-status', 'Loading your bankroll…');
+
+  await loadUserProfile();
+}
+
+async function loadUserProfile() {
+  if (!currentUser) {
+    userProfile = null;
+    updateAuthUI();
+    return null;
+  }
+  const identity = getGoogleIdentity(currentUser);
+  try {
+    const snapshot = await get(userRef());
+    let profile = snapshot.exists() ? snapshot.val() : null;
+
+    if (!profile) {
+      profile = {
+        displayName: identity.displayName,
+        email: identity.email,
+        photoURL: identity.photoURL,
+        walletBalance: STARTER_BANKROLL,
+        activeTable: null,
+        createdAt: Date.now(),
+        updatedAt: Date.now()
+      };
+      await set(userRef(), profile);
+    } else {
+      profile = {
+        ...profile,
+        displayName: identity.displayName,
+        email: identity.email,
+        photoURL: identity.photoURL,
+        walletBalance: Number(profile.walletBalance ?? STARTER_BANKROLL),
+        activeTable: profile.activeTable || null,
+        updatedAt: Date.now()
+      };
+      await update(userRef(), {
+        displayName: profile.displayName,
+        email: profile.email,
+        photoURL: profile.photoURL,
+        walletBalance: profile.walletBalance,
+        updatedAt: profile.updatedAt
+      });
+    }
+
+    userProfile = profile;
+    updateAuthUI();
+    setStatus('lobby-status', '');
+    return profile;
+  } catch (err) {
+    console.error('Profile load error:', err);
+    userProfile = {
+      displayName: identity.displayName,
+      email: identity.email,
+      photoURL: identity.photoURL,
+      walletBalance: STARTER_BANKROLL,
+      activeTable: null,
+    };
+    updateAuthUI();
+    const message = formatAuthError(err);
+    setStatus('lobby-status', message);
+    toast('Signed in, but bankroll could not save to Firebase. Check database rules.');
+    return userProfile;
+  }
+}
+async function reserveBuyIn(room, amount = TABLE_BUY_IN, status = 'waiting', playerId = null) {
+  const targetRoom = room || roomCode;
+  const reservePlayerId = playerId || myId || randomId();
+  const result = await runTransaction(userRef(), current => {
+    const next = current || {
+      displayName: currentUser.displayName || 'Player',
+      email: currentUser.email || '',
+      photoURL: currentUser.photoURL || '',
+      walletBalance: STARTER_BANKROLL,
+      activeTable: null,
+      createdAt: Date.now(),
+      updatedAt: Date.now()
+    };
+
+    next.walletBalance = Number(next.walletBalance || 0);
+    const activeRoom = next.activeTable?.roomCode;
+    const activeStack = Number(next.activeTable?.stack || 0);
+    if (activeRoom && activeStack > 0) return;
+    if (amount !== TABLE_BUY_IN || amount > next.walletBalance) return;
+
+    next.walletBalance -= amount;
+    next.activeTable = {
+      roomCode: targetRoom,
+      playerId: reservePlayerId,
+      buyIn: amount,
+      stack: amount,
+      status,
+      reservedAt: Date.now()
+    };
+    next.updatedAt = Date.now();
+    return next;
+  });
+
+  if (!result.committed) {
+    throw new Error('Buy-in reservation failed');
+  }
+  userProfile = result.snapshot.val();
+  updateAuthUI();
+  return { playerId: reservePlayerId, profile: userProfile };
+}
+async function syncActiveTableStack(stack, status = 'playing') {
+  if (!currentUser || !userProfile?.activeTable?.roomCode || syncInFlight) return;
+  if (userProfile.activeTable.roomCode !== roomCode) return;
+  syncInFlight = true;
+  try {
+    const nextStack = Number(stack || 0);
+    const result = await runTransaction(userRef(), current => {
+      if (!current?.activeTable || current.activeTable.roomCode !== roomCode) return current;
+      current.activeTable.stack = nextStack;
+      current.activeTable.status = status;
+      current.updatedAt = Date.now();
+      return current;
+    });
+    userProfile = result.snapshot.val();
+    updateAuthUI();
+  } finally {
+    syncInFlight = false;
+  }
+}
+async function releaseActiveTableFunds(reason = 'left') {
+  if (!currentUser || !userProfile?.activeTable) return;
+  const activeTable = userProfile.activeTable;
+  const stackToReturn = Number(activeTable.stack || 0);
+  const result = await runTransaction(userRef(), current => {
+    if (!current?.activeTable || current.activeTable.roomCode !== activeTable.roomCode) return current;
+    current.walletBalance = Number(current.walletBalance || 0) + stackToReturn;
+    current.activeTable = null;
+    current.updatedAt = Date.now();
+    return current;
+  });
+  userProfile = result.snapshot.val();
+  updateAuthUI();
+  if (stackToReturn > 0) toast(`${formatMoney(stackToReturn)} returned to your bankroll (${reason}).`);
+}
+async function clearActiveTableIfEmpty() {
+  if (!currentUser || !userProfile?.activeTable || userProfile.activeTable.roomCode !== roomCode) return;
+  if (Number(userProfile.activeTable.stack || 0) > 0) return;
+  const result = await runTransaction(userRef(), current => {
+    if (!current?.activeTable || current.activeTable.roomCode !== roomCode) return current;
+    current.activeTable = null;
+    current.updatedAt = Date.now();
+    return current;
+  });
+  userProfile = result.snapshot.val();
+  updateAuthUI();
+}
+async function handleRebuy() {
+  if (!currentUser || !roomCode || !gameState) return;
+  const wallet = getWalletBalance();
+  if (wallet < TABLE_BUY_IN) {
+    if (canClaimStarterBankroll()) {
+      toast('Bankroll empty — claim your free $5,000 first.');
+    } else {
+      toast(`Need at least ${formatMoney(TABLE_BUY_IN)} in your wallet to rebuy.`);
+    }
+    return;
+  }
+  const identity = getSignedInPlayerIdentity();
+  if (!identity) return;
+  const name = identity.displayName || 'Player';
+  const existingPlayer = gameState.players[myId];
+  const seatIdx = existingPlayer ? existingPlayer.seatIndex : 0;
+  const result = await runTransaction(userRef(), current => {
+    if (!current) return;
+    if (Number(current.walletBalance || 0) < TABLE_BUY_IN) return;
+    current.walletBalance = Number(current.walletBalance || 0) - TABLE_BUY_IN;
+    current.activeTable = {
+      roomCode: roomCode,
+      playerId: myId,
+      buyIn: TABLE_BUY_IN,
+      stack: TABLE_BUY_IN,
+      status: 'pending',
+      reservedAt: Date.now()
+    };
+    current.updatedAt = Date.now();
+    return current;
+  });
+  if (!result.committed) {
+    toast('Rebuy failed. Try again.');
+    return;
+  }
+  userProfile = result.snapshot.val();
+  updateAuthUI();
+  const myPendingRef = ref(db, `poker/${roomCode}/pending/${myId}`);
+  await set(myPendingRef, {
+    id: myId,
+    authUid: currentUser.uid,
+    name,
+    photoURL: identity.photoURL || '',
+    stack: TABLE_BUY_IN,
+    buyIn: TABLE_BUY_IN,
+    bankroll: getTotalBankroll(),
+    isHost: false,
+    seatIndex: seatIdx,
+    joinedAt: Date.now()
+  });
+  onDisconnect(myPendingRef).remove();
+  isPending = true;
+  isSpectator = false;
+  toast(`${formatMoney(TABLE_BUY_IN)} rebuy placed! You'll be dealt in next hand.`);
+  await update(roomRef(), { lastActive: Date.now() });
+}
+window.handleRebuy = handleRebuy;
+async function claimStarterBankroll() {
+  if (!currentUser) {
+    toast('Sign in with Google first.');
+    return;
+  }
+  if (!canClaimStarterBankroll()) {
+    toast('You can only claim after your bankroll reaches $0.');
+    return;
+  }
+  const result = await runTransaction(userRef(), current => {
+    const next = current || {
+      displayName: currentUser.displayName || 'Player',
+      email: currentUser.email || '',
+      photoURL: currentUser.photoURL || '',
+      walletBalance: 0,
+      activeTable: null,
+      createdAt: Date.now(),
+      updatedAt: Date.now()
+    };
+    const total = Number(next.walletBalance || 0) + Number(next.activeTable?.stack || 0);
+    if (total > 0) return;
+    next.walletBalance = STARTER_BANKROLL;
+    next.updatedAt = Date.now();
+    return next;
+  });
+  if (!result.committed) {
+    toast('Claim unavailable right now.');
+    return;
+  }
+  userProfile = result.snapshot.val();
+  updateAuthUI();
+  toast('Another $5,000 added to your bankroll.');
+}
+function ensureSignedIn() {
+  if (currentUser) return true;
+  setStatus('lobby-status', 'Sign in with Google to play.');
+  toast('Sign in with Google to play.');
+  return false;
+}
+
+function playTurnSound() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(880, ctx.currentTime);
+    osc.frequency.setValueAtTime(1100, ctx.currentTime + 0.1);
+    gain.gain.setValueAtTime(0.15, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3);
+    osc.start(ctx.currentTime);
+    osc.stop(ctx.currentTime + 0.3);
+  } catch(e) {}
+}
+
+const SUITS = ['♠','♥','♦','♣'];
+const RANKS = ['2','3','4','5','6','7','8','9','10','J','Q','K','A'];
+
+function buildDeck() {
+  const deck = [];
+  for (const s of SUITS) for (const r of RANKS) deck.push({s, r});
+  return deck;
+}
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length-1; i>0; i--) {
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]] = [a[j],a[i]];
+  }
+  return a;
+}
+
+function cardEl(card, hidden=false) {
+  const el = document.createElement('div');
+  if (!card || hidden) { el.className = 'card back'; return el; }
+  const isRed = card.s === '♥' || card.s === '♦';
+  el.className = `card ${isRed ? 'red' : 'black'}`;
+  el.innerHTML = `<span class="rank">${card.r}</span><span class="center-suit">${card.s}</span><span class="suit">${card.s}</span>`;
+  return el;
+}
+function placeholderCard() {
+  const el = document.createElement('div');
+  el.className = 'card placeholder';
+  return el;
+}
+
+const RANK_VAL = { '2':2,'3':3,'4':4,'5':5,'6':6,'7':7,'8':8,'9':9,'10':10,'J':11,'Q':12,'K':13,'A':14 };
+
+function rankCards(cards) {
+  const vals = cards.map(c=>RANK_VAL[c.r]).sort((a,b)=>b-a);
+  const suits = cards.map(c=>c.s);
+  const counts = {};
+  for (const v of vals) counts[v] = (counts[v]||0)+1;
+  const groups = Object.entries(counts).map(([v,c])=>({v:+v,c})).sort((a,b)=>b.c-a.c||b.v-a.v);
+  const isFlush = suits.every(s=>s===suits[0]);
+  const isStraight = (() => {
+    const unique = [...new Set(vals)].sort((a,b)=>b-a);
+    if (unique.length < 5) return false;
+    for (let i=0; i<=unique.length-5; i++) {
+      if (unique[i]-unique[i+4]===4 &&
+          unique[i]-unique[i+1]===1 && unique[i+1]-unique[i+2]===1 &&
+          unique[i+2]-unique[i+3]===1 && unique[i+3]-unique[i+4]===1) return unique[i];
+    }
+    if (unique.includes(14) && unique.includes(5) && unique.includes(4) && unique.includes(3) && unique.includes(2)) return 5;
+    return false;
+  })();
+
+  const straightHigh = isStraight;
+  const [g1, g2] = groups;
+
+  if (isFlush && straightHigh === 14 && vals.includes(13)) return { rank:9, name:'Royal Flush', tb:[14] };
+  if (isFlush && straightHigh) return { rank:8, name:'Straight Flush', tb:[straightHigh] };
+  if (g1.c===4) return { rank:7, name:'Four of a Kind', tb:[g1.v, g2?.v||0] };
+  if (g1.c===3 && g2?.c===2) return { rank:6, name:'Full House', tb:[g1.v, g2.v] };
+  if (isFlush) return { rank:5, name:'Flush', tb:vals };
+  if (straightHigh) return { rank:4, name:'Straight', tb:[straightHigh] };
+  if (g1.c===3) return { rank:3, name:'Three of a Kind', tb:[g1.v,...vals.filter(v=>v!==g1.v)] };
+  if (g1.c===2 && g2?.c===2) return { rank:2, name:'Two Pair', tb:[Math.max(g1.v,g2.v),Math.min(g1.v,g2.v),...vals.filter(v=>v!==g1.v&&v!==g2.v)] };
+  if (g1.c===2) return { rank:1, name:'One Pair', tb:[g1.v,...vals.filter(v=>v!==g1.v)] };
+  return { rank:0, name:'High Card', tb:vals };
+}
+
+function best5(cards) {
+  if (cards.length < 5) return { rank:-1, name:'—', tb:[] };
+  let best = null;
+  const combos = getCombos(cards, 5);
+  for (const combo of combos) {
+    const r = rankCards(combo);
+    if (!best || r.rank > best.rank || (r.rank===best.rank && compareTb(r.tb,best.tb)>0)) best = r;
+  }
+  return best;
+}
+function getCombos(arr, k) {
+  if (k===0) return [[]];
+  if (arr.length===k) return [arr];
+  const [first, ...rest] = arr;
+  return [...getCombos(rest,k-1).map(c=>[first,...c]), ...getCombos(rest,k)];
+}
+function compareTb(a,b) {
+  for (let i=0; i<Math.max(a.length,b.length); i++) {
+    const d = (a[i]||0)-(b[i]||0);
+    if (d!==0) return d;
+  }
+  return 0;
+}
+
+function findWinner(players, community) {
+  let bestRank = null, winner = null;
+  for (const p of players) {
+    if (p.folded || !p.hand || p.hand.length < 2) continue;
+    const allCards = [...p.hand, ...community];
+    const r = best5(allCards);
+    if (!bestRank || r.rank > bestRank.rank || (r.rank===bestRank.rank && compareTb(r.tb,bestRank.tb)>0)) {
+      bestRank = r; winner = { ...p, handResult: r };
+    }
+  }
+  return winner;
+}
+
+const SEAT_POSITIONS = [
+  { top:'78%', left:'50%' },   
+  { top:'75%', left:'20%' },   
+  { top:'50%', left:'6%'  },   
+  { top:'18%', left:'20%' },   
+  { top:'15%', left:'50%' },   
+  { top:'18%', left:'72%' },   
+];
+
+function roomRef(path='') { return ref(db, `poker/${roomCode}${path}`); }
+
+document.getElementById('google-signin-btn').addEventListener('click', () => signInWithGoogle(false));
+
+async function bootAuth() {
+  await checkGoogleProviderConfigured();
+
+  try {
+    const result = await getRedirectResult(auth);
+    if (result?.user) {
+      await onUserSignedIn(result.user);
+      toast('Signed in with Google');
+    }
+  } catch (err) {
+    console.error('Redirect result error:', err);
+    const message = formatAuthError(err);
+    setStatus('lobby-status', message);
+    toast(message);
+    if (err?.code === 'auth/operation-not-allowed') showAuthSetupBanner(true);
+  }
+
+  onAuthStateChanged(auth, user => onUserSignedIn(user));
+}
+
+bootAuth();
+
+document.getElementById('google-signout-btn').addEventListener('click', async () => {
+  if (roomCode && userProfile?.activeTable?.roomCode === roomCode) {
+    toast('Leave the current table before signing out.');
+    return;
+  }
+  await signOut(auth);
+});
+
+document.getElementById('claim-bankroll-btn').addEventListener('click', claimStarterBankroll);
+document.getElementById('hud-claim-btn').addEventListener('click', claimStarterBankroll);
+
+function initTableBrowser() {
+  onValue(ref(db, 'poker'), snapshot => {
+    const listEl = document.getElementById('active-rooms-list');
+    listEl.innerHTML = '';
+    
+    if (!snapshot.exists()) {
+      listEl.innerHTML = '<div class="no-rooms">No active tables found. Create one!</div>';
+      return;
+    }
+
+    const rooms = snapshot.val();
+    let counter = 0;
+
+    for (const code in rooms) {
+      if (code === 'users') continue;
+      const room = rooms[code];
+      const pCount = room.players ? Object.keys(room.players).length : 0;
+      const pendCount = room.pending ? Object.keys(room.pending).length : 0;
+      const combinedCount = pCount + pendCount;
+      
+      if (combinedCount === 0) {
+        remove(ref(db, `poker/${code}`));
+        continue; 
+      }
+
+      const lastActive = room.lastActive || room.createdAt || 0;
+      if (Date.now() - lastActive > 30 * 60 * 1000) continue;
+
+      counter++;
+
+      const li = document.createElement('li');
+      const info = document.createElement('div');
+      info.className = 'room-info';
+      
+      const title = document.createElement('span');
+      title.innerHTML = `<strong style="color:var(--gold-light)">Table ${code}</strong>`;
+      
+      const meta = document.createElement('span');
+      meta.className = 'room-meta';
+      const statusLabel = room.status === 'playing' ? 'In Progress' : 'Waiting';
+      meta.textContent = `${combinedCount}/6 Players · ${statusLabel}`;
+      
+      info.appendChild(title);
+      info.appendChild(meta);
+
+      const joinBtn = document.createElement('button');
+      joinBtn.className = 'btn-mini-join';
+      joinBtn.textContent = 'Join';
+      joinBtn.onclick = () => handleJoinSequence(code);
+
+      li.appendChild(info);
+      li.appendChild(joinBtn);
+      listEl.appendChild(li);
+    }
+
+    if (counter === 0) {
+      listEl.innerHTML = '<div class="no-rooms">No active tables found. Create one!</div>';
+    }
+  });
+}
+initTableBrowser();
+
+document.getElementById('create-btn').addEventListener('click', async () => {
+  if (!ensureSignedIn()) return;
+  const identity = getSignedInPlayerIdentity();
+  const name = identity?.displayName?.trim();
+  if (!name) { setStatus('lobby-status','Your Google account needs a display name'); return; }
+  const buyInCheck = validateTableBuyIn();
+  if (!buyInCheck.ok) { setStatus('lobby-status', buyInCheck.message); return; }
+  const buyIn = buyInCheck.amount;
+  if (userProfile?.activeTable?.roomCode) {
+    setStatus('lobby-status', `You're already seated at table ${userProfile.activeTable.roomCode}.`);
+    return;
+  }
+
+  const createBtn = document.getElementById('create-btn');
+  createBtn.disabled = true;
+  createBtn.textContent = 'Creating…';
+  setStatus('lobby-status', '');
+
+  try {
+    roomCode = genRoomCode();
+    const reservation = await reserveBuyIn(roomCode, buyIn, 'waiting');
+    myId = reservation.playerId;
+    isHost = true;
+    isSpectator = false;
+
+    const playerData = {
+      id: myId,
+      authUid: currentUser.uid,
+      name,
+      photoURL: identity.photoURL,
+      stack: buyIn,
+      buyIn,
+      bankroll: getTotalBankroll(),
+      isHost: true,
+      seatIndex: 0,
+      joinedAt: Date.now()
+    };
+    await set(roomRef(), {
+      code: roomCode,
+      host: myId,
+      status: 'waiting',
+      minBuyIn: TABLE_BUY_IN,
+      tableBuyIn: TABLE_BUY_IN,
+      players: { [myId]: playerData },
+      createdAt: Date.now(),
+      lastActive: Date.now()
+    });
+
+    onDisconnect(ref(db, `poker/${roomCode}/players/${myId}`)).remove();
+
+    document.getElementById('room-code-display').textContent = roomCode;
+    document.getElementById('room-code-display').style.display = 'block';
+    goToWaiting();
+  } catch (err) {
+    console.error('Create table error:', err);
+    setStatus('lobby-status', '⚠️ Failed to create table. Check your connection.');
+    if (roomCode && currentUser && userProfile?.activeTable?.roomCode === roomCode) {
+      await releaseActiveTableFunds('create failed');
+    }
+    roomCode = null; myId = null; isHost = false;
+  } finally {
+    setGameplayButtonsEnabled(!!currentUser);
+    createBtn.textContent = 'Create Table';
+  }
+});
+
+async function handleJoinSequence(code) {
+  if (!ensureSignedIn()) return;
+  const identity = getSignedInPlayerIdentity();
+  const name = identity?.displayName?.trim();
+  if (!name) { setStatus('lobby-status','Your Google account needs a display name'); return; }
+  if (userProfile?.activeTable?.roomCode) {
+    setStatus('lobby-status', `You're already seated at table ${userProfile.activeTable.roomCode}.`);
+    return;
+  }
+  
+  const joinBtn = document.getElementById('join-btn');
+  joinBtn.disabled = true;
+  setStatus('lobby-status','Connecting…');
+
+  try {
+    const snap = await get(ref(db, `poker/${code}`));
+    if (!snap.exists()) { setStatus('lobby-status','⚠️ Table not found. Check the code.'); setGameplayButtonsEnabled(!!currentUser); return; }
+    const room = snap.val();
+
+    roomCode = code;
+    myId = randomId();
+    isHost = false;
+
+    if (room.status === 'waiting') {
+      const buyInCheck = validateTableBuyIn();
+      if (!buyInCheck.ok) {
+        setStatus('lobby-status', buyInCheck.message);
+        setGameplayButtonsEnabled(!!currentUser);
+        return;
+      }
+      const buyIn = buyInCheck.amount;
+      isSpectator = false;
+      const activeCount = Object.keys(room.players||{}).length;
+      if (activeCount >= 6) { setStatus('lobby-status','⚠️ Table is full (6/6).'); setGameplayButtonsEnabled(!!currentUser); return; }
+      
+      // Find next open raw structural index in waiting layout
+      const reservation = await reserveBuyIn(roomCode, buyIn, 'waiting', myId);
+      myId = reservation.playerId;
+      const myPlayerRef = ref(db, `poker/${roomCode}/players/${myId}`);
+      await set(myPlayerRef, {
+        id: myId,
+        authUid: currentUser.uid,
+        name,
+        photoURL: identity.photoURL,
+        stack: buyIn,
+        buyIn,
+        bankroll: getTotalBankroll(),
+        isHost: false,
+        seatIndex: activeCount,
+        joinedAt: Date.now()
+      });
+      onDisconnect(myPlayerRef).remove();
+      await update(roomRef(), { lastActive: Date.now() });
+      goToWaiting();
+    } else {
+      // Already playing! Enter instantly as a Spectator
+      isSpectator = true;
+      isPending = false;
+      await update(roomRef(), { lastActive: Date.now() });
+      goToGame();
+      toast('👁 You\'re spectating. Click "+ Sit Here" on an empty seat to join the next hand!');
+    }
+  } catch (err) {
+    console.error('Join error:', err);
+    setStatus('lobby-status', '⚠️ Failed to join. Check your connection.');
+    if (roomCode && currentUser && userProfile?.activeTable?.roomCode === roomCode && !isSpectator) {
+      await releaseActiveTableFunds('join failed');
+    }
+    roomCode = null; myId = null;
+  } finally {
+    setGameplayButtonsEnabled(!!currentUser);
+  }
+}
+
+document.getElementById('join-btn').addEventListener('click', () => {
+  const code = document.getElementById('join-code').value.trim().toUpperCase();
+  if (!code) { setStatus('lobby-status','Please enter a room code'); return; }
+  handleJoinSequence(code);
+});
+
+// Enter key shortcuts
+document.getElementById('player-name').addEventListener('keydown', e => {
+  if (e.key === 'Enter') document.getElementById('create-btn').click();
+});
+document.getElementById('join-code').addEventListener('keydown', e => {
+  if (e.key === 'Enter') document.getElementById('join-btn').click();
+});
+// Auto-uppercase join code as you type
+document.getElementById('join-code').addEventListener('input', e => {
+  const pos = e.target.selectionStart;
+  e.target.value = e.target.value.toUpperCase();
+  e.target.setSelectionRange(pos, pos);
+});
+
+document.getElementById('copy-code-btn').addEventListener('click', () => {
+  if (!roomCode) return;
+  navigator.clipboard.writeText(roomCode).then(() => {
+    const btn = document.getElementById('copy-code-btn');
+    btn.textContent = '\u2713 Copied!';
+    setTimeout(() => btn.textContent = '\ud83d\udccb Copy Code', 2000);
+  }).catch(() => toast('Could not copy'));
+});
+
+document.getElementById('leave-waiting-btn').addEventListener('click', async () => {
+  if (!roomCode || !myId) return;
+  try {
+    const playerSnap = await get(ref(db, `poker/${roomCode}/players/${myId}`));
+    await remove(ref(db, `poker/${roomCode}/players/${myId}`));
+    if (playerSnap.exists() && playerSnap.val()?.authUid === currentUser?.uid) {
+      await releaseActiveTableFunds('left waiting room');
+    }
+  } catch(e) {}
+  if (unsubscribe) { unsubscribe(); unsubscribe = null; }
+  roomCode = null; myId = null; isHost = false; isSpectator = false;
+  document.getElementById('waiting-room').style.display = 'none';
+  document.getElementById('lobby').style.display = 'flex';
+  document.getElementById('room-code-display').style.display = 'none';
+  document.getElementById('lobby-status').textContent = '';
+});
+
+function goToWaiting() {
+  document.getElementById('lobby').style.display = 'none';
+  document.getElementById('waiting-room').style.display = 'flex';
+  document.getElementById('room-code-show').textContent = roomCode;
+
+  if (unsubscribe) unsubscribe();
+  const unsub = onValue(roomRef(), snap => {
+    if (!snap.exists()) {
+      console.warn("Room deleted or missing in goToWaiting");
+      return;
+    }
+    const room = snap.val();
+    renderWaitingPlayers(room.players||{});
+    if (room.status === 'playing' || room.gameState) {
+      unsub();
+      goToGame();
+    }
+  });
+  unsubscribe = () => unsub();
+}
+
+function renderWaitingPlayers(players) {
+  const list = document.getElementById('player-list');
+  list.innerHTML = '';
+  const arr = Object.values(players).sort((a,b)=>a.joinedAt-b.joinedAt);
+  for (const p of arr) {
+    const li = document.createElement('li');
+    li.innerHTML = `
+      <span class="dot"></span>
+      ${p.photoURL ? `<img class="waiting-avatar" src="${escapeHtml(p.photoURL)}" alt="${escapeHtml(p.name)}">` : ''}
+      <span>${escapeHtml(p.name)} · ${formatMoney(p.stack || p.buyIn || 0)}</span>
+      ${p.isHost ? '<span class="host-badge">Host</span>' : ''}`;
+    list.appendChild(li);
+  }
+  const count = arr.length;
+  const startBtn = document.getElementById('start-game-btn');
+  const statusEl = document.getElementById('waiting-status');
+
+  if (isHost) {
+    startBtn.style.display = count >= 2 ? 'block' : 'none';
+    statusEl.textContent = count >= 2 ? `${count} players ready — host can start` : `Waiting for players… (${count}/6)`;
+  } else {
+    startBtn.style.display = 'none';
+    statusEl.textContent = `${count} players connected — waiting for host to start`;
+  }
+}
+
+document.getElementById('start-game-btn').addEventListener('click', async () => {
+  if (!isHost) return;
+  const snap = await get(roomRef('/players'));
+  const players = snap.val() || {};
+  await startNewHand(players, true);
+});
+
+async function startNewHand(playersObj, firstHand = false) {
+  const existing = gameState;
+
+  const pendingSnap = await get(roomRef('/pending'));
+  const pendingObj = pendingSnap.exists() ? pendingSnap.val() : {};
+
+  const allPlayers = {};
+  for (const [id, p] of Object.entries(playersObj)) {
+    // Keep active surviving players
+    const stack = existing ? (existing.players[id]?.stack ?? p.stack) : p.stack;
+    if (stack > 0) {
+      allPlayers[id] = { ...p, stack, bankroll: p.bankroll || 0 };
+    }
+  }
+  
+  // Transition pending sit-ins into live table positions
+  for (const [id, p] of Object.entries(pendingObj)) {
+    allPlayers[id] = { ...p, stack: p.stack || p.buyIn || TABLE_BUY_IN, bankroll: p.bankroll || 0 };
+  }
+
+  if (Object.keys(pendingObj).length > 0) {
+    await set(roomRef('/pending'), null);
+  }
+
+  const playersArr = Object.values(allPlayers);
+  if (playersArr.length < 2) {
+    await update(roomRef(), { status: 'waiting', gameState: null });
+    return;
+  }
+
+  const deck = shuffle(buildDeck());
+  let di = deck.length;
+
+  const dealtPlayers = {};
+  for (let i=0; i<playersArr.length; i++) {
+    const p = playersArr[i];
+    dealtPlayers[p.id] = {
+      id: p.id,
+      authUid: p.authUid || null,
+      name: p.name,
+      photoURL: p.photoURL || '',
+      stack: p.stack,
+      buyIn: p.buyIn || p.stack,
+      bankroll: p.bankroll || 0,
+      hand: [deck[--di], deck[--di]],
+      bet: 0,
+      totalBet: 0,
+      folded: false,
+      isHost: p.isHost || false,
+      seatIndex: p.seatIndex ?? i,
+      joinedAt: p.joinedAt
+    };
+  }
+
+  // Find a live active dealer seat index safely
+  const handNum = (existing?.handNumber||0) + 1;
+  const currentSeats = Object.values(dealtPlayers).map(p => p.seatIndex).sort((a,b)=>a-b);
+  
+  let dealerSeatIdx = currentSeats[0];
+  if (existing) {
+    const prevSeat = existing.players[existing.dealerId]?.seatIndex ?? -1;
+    const nextSeats = currentSeats.filter(s => s > prevSeat);
+    dealerSeatIdx = nextSeats.length > 0 ? nextSeats[0] : currentSeats[0];
+  }
+
+  const dealerId = Object.values(dealtPlayers).find(p => p.seatIndex === dealerSeatIdx).id;
+  
+  // Blinds sequence order tracking
+  const sortedBySeat = Object.values(dealtPlayers).sort((a,b) => a.seatIndex - b.seatIndex);
+  const dIdx = sortedBySeat.findIndex(p => p.id === dealerId);
+  const sbPlayer = sortedBySeat[(dIdx + 1) % sortedBySeat.length];
+  const bbPlayer = sortedBySeat[(dIdx + 2) % sortedBySeat.length];
+  const utgPlayer = sortedBySeat[(dIdx + 3) % sortedBySeat.length];
+
+  function postBlind(pid, amount) {
+    const actual = Math.min(dealtPlayers[pid].stack, amount);
+    dealtPlayers[pid].stack -= actual;
+    dealtPlayers[pid].bet = actual;
+    dealtPlayers[pid].totalBet = actual;
+    return actual;
+  }
+  
+  const sbPosted = postBlind(sbPlayer.id, 10);
+  const bbPosted = postBlind(bbPlayer.id, 20);
+
+  const gs = {
+    handNumber: handNum,
+    dealerIndex: dealerSeatIdx,
+    dealerId: dealerId,
+    sbId: sbPlayer.id, 
+    bbId: bbPlayer.id,
+    stage: 'preflop',
+    players: dealtPlayers,
+    playerOrder: sortedBySeat.map(p => p.id),
+    currentTurn: utgPlayer.id,
+    turnStartedAt: Date.now(),
+    pot: sbPosted + bbPosted,
+    sidePot: 0,
+    community: [],
+    currentBet: 20,
+    lastRaise: 20,
+    actedThisRound: [],
+    lastAction: { playerName: '---', action: `Hand #${handNum} — SB $${sbPosted} BB $${bbPosted}`, ts: Date.now() },
+    winner: null,
+    deckRemaining: deck.slice(0, di),
+    status: 'playing'
+  };
+
+  await update(roomRef(), { gameState: gs, status: 'playing', lastActive: Date.now() });
+}
+
+async function goToGame() {
+  document.getElementById('lobby').style.display = 'none';
+  document.getElementById('waiting-room').style.display = 'none';
+  document.getElementById('game-table').style.display = 'block';
+
+  if (unsubscribe) unsubscribe();
+  const unsub = onValue(roomRef(), snap => {
+    if (!snap.exists()) {
+      console.warn("Room deleted or missing in goToGame");
+      return;
+    }
+    const room = snap.val();
+
+    if (room.status === 'waiting') {
+      unsub();
+      document.getElementById('game-table').style.display = 'none';
+      goToWaiting();
+      return;
+    }
+
+    gameState = room.gameState;
+    if (!gameState) return;
+
+    // Track state switches if player sat down mid-hand
+    if (isPending && gameState.players && gameState.players[myId]) {
+      isPending = false;
+      isSpectator = false;
+      toast("🃏 You're in! Cards coming your way.");
+    }
+    renderGame();
+  });
+  unsubscribe = () => unsub();
+
+  // Host-side turn timeout enforcement
+  if (turnEnforcementInterval) clearInterval(turnEnforcementInterval);
+  if (isHost) {
+    turnEnforcementInterval = setInterval(async () => {
+      if (!gameState || gameState.winner) return;
+      if (gameState.currentTurn === myId) return;
+      const elapsed = Date.now() - (gameState.turnStartedAt || Date.now());
+      if (elapsed > 35000) {
+        const freshSnap = await get(roomRef('/gameState'));
+        if (!freshSnap.exists()) return;
+        const gs = freshSnap.val();
+        if (gs.winner || gs.currentTurn === myId) return;
+        const freshElapsed = Date.now() - (gs.turnStartedAt || Date.now());
+        if (freshElapsed <= 35000) return;
+        const tp = gs.players[gs.currentTurn];
+        if (!tp || tp.folded) return;
+        tp.folded = true;
+        gs.lastAction = { playerName: tp.name, action: 'folds (timed out)', ts: Date.now() };
+        if (!gs.actedThisRound) gs.actedThisRound = [];
+        if (!gs.actedThisRound.includes(gs.currentTurn)) gs.actedThisRound.push(gs.currentTurn);
+        advanceTurn(gs);
+        await update(roomRef(), { gameState: gs, lastActive: Date.now() });
+      }
+    }, 5000);
+  }
+}
+
+async function requestSeatReservation(seatIdx) {
+  if (!ensureSignedIn()) return;
+  const buyInCheck = validateTableBuyIn();
+  if (!buyInCheck.ok) {
+    toast(buyInCheck.message);
+    return;
+  }
+  const buyIn = buyInCheck.amount;
+  const identity = getSignedInPlayerIdentity();
+  const reservation = await reserveBuyIn(roomCode, buyIn, 'pending', myId);
+  myId = reservation.playerId;
+  const name = identity?.displayName || "Spectator";
+  isSpectator = false;
+  isPending = true;
+
+  const myPendingRef = ref(db, `poker/${roomCode}/pending/${myId}`);
+  await set(myPendingRef, {
+    id: myId,
+    authUid: currentUser.uid,
+    name,
+    photoURL: identity.photoURL,
+    stack: buyIn,
+    buyIn,
+    bankroll: getTotalBankroll(),
+    isHost: false,
+    seatIndex: seatIdx,
+    joinedAt: Date.now()
+  });
+  // Clean up database table nodes cleanly if browser closes early
+  onDisconnect(myPendingRef).remove();
+  
+  toast(`🪑 Seat #${seatIdx + 1} reserved! Sit tight.`);
+  await update(roomRef(), { lastActive: Date.now() });
+}
+
+let prevTurn = null;
+let prevStage = null;
+let prevWinner = null;
+
+function launchChips(sourceEl, destEl) {
+  if (!sourceEl || !destEl) return;
+  const srcRect = sourceEl.getBoundingClientRect();
+  const destRect = destEl.getBoundingClientRect();
+  const chipColors = ['var(--chip-red)', 'var(--chip-blue)', 'var(--chip-green)', 'var(--gold)'];
+
+  for (let i = 0; i < 6; i++) {
+    setTimeout(() => {
+      const chip = document.createElement('div');
+      chip.className = 'chip-anim-token';
+      chip.style.backgroundColor = chipColors[Math.floor(Math.random() * chipColors.length)];
+      chip.style.left = `${srcRect.left + srcRect.width / 2 - 9}px`;
+      chip.style.top = `${srcRect.top + srcRect.height / 2 - 9}px`;
+      document.body.appendChild(chip);
+
+      chip.getBoundingClientRect();
+      chip.style.left = `${destRect.left + destRect.width / 2 - 9}px`;
+      chip.style.top = `${destRect.top + destRect.height / 2 - 9}px`;
+
+      setTimeout(() => chip.remove(), 650);
+    }, i * 60);
+  }
+}
+
+function renderGame() {
+  if (!gameState) return;
+  const gs = gameState;
+
+  if (gs.stage === 'preflop') prevCommunityCount = 0;
+
+  document.getElementById('hud-round').textContent = `Hand #${gs.handNumber}`;
+  document.getElementById('hud-stage').textContent = stageLabel(gs.stage);
+  
+  const myData = gs.players[myId];
+  const stackEl = document.getElementById('hud-my-stack');
+  const hudClaimBtn = document.getElementById('hud-claim-btn');
+  if (myData) {
+    stackEl.textContent = `Table Stack: ${formatMoney(myData.stack)}`;
+    if (myData.stack <= 0) {
+      stackEl.innerHTML = `BUSTED · <span style="color:var(--gold-light);cursor:pointer;text-decoration:underline;" onclick="handleRebuy()">Rebuy $1,000</span>`;
+    }
+    if (currentUser && userProfile?.activeTable?.roomCode === roomCode) {
+      syncActiveTableStack(myData.stack, gs.winner ? 'showdown' : 'playing');
+    }
+  } else if (isPending) {
+    stackEl.textContent = `⏳ Sitting Next Hand`;
+  } else if (isSpectator) {
+    stackEl.innerHTML = `👁 Spectating · <span style="color:var(--gold);">Click "+ Sit Here" to join next hand</span>`;
+    if (currentUser && userProfile?.activeTable?.roomCode === roomCode && getActiveTableStack() <= 0) {
+      clearActiveTableIfEmpty();
+    }
+  } else {
+    stackEl.textContent = `👁 Watching`;
+  }
+  // Show claim button if bankroll is empty
+  hudClaimBtn.style.display = (!myData && canClaimStarterBankroll()) ? 'inline-flex' : 'none';
+
+  get(roomRef('/pending')).then(snap => {
+    const pendingEl = document.getElementById('hud-pending');
+    if (snap.exists()) {
+      const names = Object.values(snap.val()).map(p=>p.name);
+      pendingEl.style.display = 'block';
+      pendingEl.textContent = `⏳ Next In: ${names.join(', ')}`;
+    } else {
+      pendingEl.style.display = 'none';
+    }
+  });
+
+  document.getElementById('pot-display').textContent = `Pot: $${gs.pot.toLocaleString()}`;
+
+  renderCommunity(gs.community || []);
+  renderSeats(gs);
+
+  if (gs.pot > prevPot && !gs.winner && gs.lastAction) {
+    const activePlayer = Object.values(gs.players).find(p => p.name === gs.lastAction.playerName);
+    if (activePlayer) {
+      const seatEl = document.querySelector(`.player-seat[data-pid="${activePlayer.id}"]`);
+      launchChips(seatEl, document.getElementById('pot-display'));
+    }
+  }
+  prevPot = gs.pot;
+
+  if (gs.stage !== prevStage) {
+    if (gs.stage !== 'preflop') log(`— ${stageLabel(gs.stage)} —`, 'highlight');
+    prevStage = gs.stage;
+  }
+  if (gs.lastAction && gs.lastAction.ts !== prevTurn) {
+    log(`${gs.lastAction.playerName}: ${gs.lastAction.action}`);
+    prevTurn = gs.lastAction.ts;
+  }
+
+  if (gs.winner && !prevWinner) {
+    prevWinner = gs.winner;
+    setTimeout(() => {
+      const winnerSeatEl = document.querySelector(`.player-seat[data-pid="${gs.winner.id}"]`);
+      launchChips(document.getElementById('pot-display'), winnerSeatEl);
+    }, 200);
+    showWinner(gs);
+  } else if (!gs.winner) {
+    prevWinner = null;
+    document.getElementById('winner-overlay').classList.remove('show');
+  }
+
+  const isMyTurn = gs.currentTurn === myId && !gs.winner && !isSpectator && !isPending;
+  if (isMyTurn && myData && !myData.folded) {
+    showActionPanel(gs, !prevMyTurn);
+  } else {
+    document.getElementById('action-panel').classList.remove('show');
+    clearTimer();
+  }
+  prevMyTurn = isMyTurn && !!myData && !myData.folded;
+}
+
+function stageLabel(stage) {
+  return { preflop:'Pre-Flop', flop:'Flop', turn:'Turn', river:'River', showdown:'Showdown' }[stage] || stage;
+}
+
+function renderCommunity(cards) {
+  const area = document.getElementById('community-cards');
+  area.innerHTML = '';
+  for (let i=0; i<5; i++) {
+    if (i < cards.length) {
+      const el = cardEl(cards[i]);
+      if (i >= prevCommunityCount) el.classList.add('deal-animate');
+      area.appendChild(el);
+    } else {
+      area.appendChild(placeholderCard());
+    }
+  }
+  prevCommunityCount = cards.length;
+}
+
+function renderSeats(gs) {
+  document.querySelectorAll('.player-seat').forEach(s=>s.remove());
+  document.querySelectorAll('.dealer-btn').forEach(d=>d.remove());
+
+  get(roomRef('/pending')).then(pendingSnap => {
+    const pendingData = pendingSnap.exists() ? Object.values(pendingSnap.val()) : [];
+    
+    for (let seatIdx = 0; seatIdx < 6; seatIdx++) {
+      const pos = SEAT_POSITIONS[seatIdx];
+      const livePlayer = Object.values(gs.players).find(p => p.seatIndex === seatIdx);
+      const incomingPlayer = pendingData.find(p => p.seatIndex === seatIdx);
+      const hasPendingRebuy = livePlayer && incomingPlayer && livePlayer.id === incomingPlayer.id;
+
+      const seatContainer = document.createElement('div');
+      seatContainer.className = 'player-seat';
+      seatContainer.style.top = pos.top;
+      seatContainer.style.left = pos.left;
+      seatContainer.style.transform = 'translate(-50%,-50%)';
+
+      if (livePlayer && livePlayer.stack > 0 && !hasPendingRebuy) {
+        // ── ACTIVE LIVE PLAYER ──
+        seatContainer.setAttribute('data-pid', livePlayer.id);
+        const isMe = livePlayer.id === myId;
+        const isActive = gs.currentTurn === livePlayer.id;
+
+        const cardsDiv = document.createElement('div');
+        cardsDiv.className = 'seat-cards';
+        if (livePlayer.hand && livePlayer.hand.length === 2) {
+          if (isMe || (gs.stage === 'showdown' && !livePlayer.folded)) {
+            cardsDiv.appendChild(cardEl(livePlayer.hand[0]));
+            cardsDiv.appendChild(cardEl(livePlayer.hand[1]));
+          } else {
+            cardsDiv.appendChild(cardEl(null, true));
+            cardsDiv.appendChild(cardEl(null, true));
+          }
+        }
+
+        const info = document.createElement('div');
+        info.className = 'seat-info';
+        if (isActive) info.classList.add('active-turn');
+        if (livePlayer.folded) info.classList.add('folded');
+
+        const statusText = livePlayer.folded ? 'Folded' : (livePlayer.id === gs.dealerId ? 'Dealer' : '');
+        const statusClass = livePlayer.folded ? 'folded-badge' : (livePlayer.id === gs.dealerId ? 'dealer' : '');
+
+        info.innerHTML = `
+          <div class="seat-header">
+            ${livePlayer.photoURL ? `<img class="seat-avatar" src="${escapeHtml(livePlayer.photoURL)}" alt="${escapeHtml(livePlayer.name)}">` : ''}
+            <div class="seat-name">${escapeHtml(isMe ? '★ ' + livePlayer.name : livePlayer.name)}</div>
+          </div>
+          <div class="seat-stack">${formatMoney(livePlayer.stack)}</div>
+          ${livePlayer.bet > 0 ? `<div class="seat-bet">Bet: $${livePlayer.bet}</div>` : ''}
+          ${statusText ? `<span class="seat-status-badge ${statusClass}">${statusText}</span>` : ''}
+        `;
+
+        seatContainer.appendChild(cardsDiv);
+        seatContainer.appendChild(info);
+
+        if (livePlayer.id === gs.dealerId) {
+          const dBtn = document.createElement('div');
+          dBtn.className = 'dealer-btn'; dBtn.textContent = 'D';
+          dBtn.style.position = 'absolute'; dBtn.style.top = pos.top; dBtn.style.left = pos.left;
+          dBtn.style.transform = `translate(calc(-50% + 32px), calc(-50% + 24px))`;
+          document.getElementById('game-table').appendChild(dBtn);
+        }
+
+      } else if (hasPendingRebuy || incomingPlayer) {
+        // ── PENDING / RE-BUY PLAYER ──
+        const p = hasPendingRebuy ? incomingPlayer : incomingPlayer;
+        const isMe = p && p.id === myId;
+        const info = document.createElement('div');
+        info.className = 'seat-info';
+        info.style.opacity = "0.7";
+        const label = hasPendingRebuy ? 'Rebought · Next Hand' : 'Sitting Next Hand';
+        info.innerHTML = `
+          <div class="seat-header">
+            ${p && p.photoURL ? `<img class="seat-avatar" src="${escapeHtml(p.photoURL)}" alt="${escapeHtml(p.name)}">` : ''}
+            <div class="seat-name" style="color:var(--gold-light);">${escapeHtml(isMe ? '★ You' : (p ? p.name : ''))}</div>
+          </div>
+          <div class="seat-stack" style="font-size:0.65rem; color:var(--gold-dim);">${label} · ${formatMoney(p ? (p.stack || p.buyIn || 0) : 0)}</div>
+        `;
+        seatContainer.appendChild(info);
+
+      } else if (livePlayer && livePlayer.stack <= 0) {
+        // ── ELIMINATED PLAYER (no rebuy pending) ──
+        seatContainer.setAttribute('data-pid', livePlayer.id);
+        const isMe = livePlayer.id === myId;
+        const info = document.createElement('div');
+        info.className = 'seat-info eliminated';
+        info.innerHTML = `
+          <div class="seat-header">
+            ${livePlayer.photoURL ? `<img class="seat-avatar" src="${escapeHtml(livePlayer.photoURL)}" alt="${escapeHtml(livePlayer.name)}">` : ''}
+            <div class="seat-name">${escapeHtml(isMe ? '★ ' + livePlayer.name : livePlayer.name)}</div>
+          </div>
+          <div class="seat-stack" style="color:var(--red-bright);">BUSTED</div>
+          ${isMe ? `<button class="action-btn btn-raise" style="margin-top:6px;font-size:0.7rem;padding:6px;" onclick="handleRebuy()">Rebuy $1,000</button>` : ''}
+        `;
+        seatContainer.appendChild(info);
+
+      } else {
+        // ── EMPTY SEAT ──
+        const emptyBtn = document.createElement('div');
+        emptyBtn.className = 'seat-empty-clickable';
+        emptyBtn.innerHTML = `<span>+ Sit Here</span>`;
+        
+        if (isSpectator && !isPending) {
+          emptyBtn.onclick = () => requestSeatReservation(seatIdx);
+        } else {
+          emptyBtn.style.cursor = 'default';
+          emptyBtn.style.opacity = '0.4';
+        }
+        seatContainer.appendChild(emptyBtn);
+      }
+
+      document.getElementById('game-table').appendChild(seatContainer);
+    }
+  });
+}
+
+function showActionPanel(gs, isNewTurn = true) {
+  const panel = document.getElementById('action-panel');
+  panel.classList.add('show');
+  const me = gs.players[myId];
+  const toCall = gs.currentBet - me.bet;
+  const canCheck = toCall <= 0;
+
+  document.getElementById('action-info').textContent =
+    `Your turn · Pot: $${gs.pot} · ${canCheck ? 'Check or raise' : `Call $${toCall} to stay in`}`;
+
+  const checkBtn = document.getElementById('btn-check');
+  const callBtn = document.getElementById('btn-call');
+  checkBtn.style.display = canCheck ? 'inline-block' : 'none';
+  callBtn.style.display = canCheck ? 'none' : 'inline-block';
+  callBtn.textContent = `Call $${gs.currentBet}`;
+
+  const minRaise = Math.max(gs.currentBet + gs.lastRaise, gs.currentBet + 1);
+  const maxRaise = me.stack + me.bet;
+  const raiseInput = document.getElementById('raise-amount');
+  const raiseSlider = document.getElementById('raise-slider');
+  raiseInput.min = minRaise;
+  raiseInput.max = maxRaise;
+  raiseInput.placeholder = `$${minRaise}–$${maxRaise}`;
+  raiseSlider.min = minRaise;
+  raiseSlider.max = maxRaise;
+  raiseSlider.value = minRaise;
+  raiseInput.value = minRaise;
+
+  raiseSlider.oninput = () => { raiseInput.value = raiseSlider.value; };
+  raiseInput.oninput = () => { raiseSlider.value = raiseInput.value; };
+
+  // Dynamic pot-based presets
+  const presetsEl = document.getElementById('raise-presets');
+  presetsEl.innerHTML = '';
+  const presets = [
+    { label: 'Min', val: minRaise },
+    { label: '½ Pot', val: Math.max(minRaise, gs.currentBet + Math.floor(gs.pot / 2)) },
+    { label: 'Pot', val: Math.max(minRaise, gs.currentBet + gs.pot) },
+    { label: '2× Pot', val: Math.max(minRaise, gs.currentBet + gs.pot * 2) },
+  ].filter(p => p.val <= maxRaise);
+
+  for (const p of presets) {
+    const btn = document.createElement('button');
+    btn.className = 'preset-btn';
+    btn.textContent = p.label;
+    btn.onclick = () => { raiseInput.value = p.val; raiseSlider.value = p.val; };
+    presetsEl.appendChild(btn);
+  }
+
+  // Turn notification
+  if (isNewTurn) {
+    playTurnSound();
+    toast('🃏 Your turn!');
+    panel.classList.add('your-turn-pulse');
+    setTimeout(() => panel.classList.remove('your-turn-pulse'), 3000);
+    startTimer(30);
+    setTimeout(() => document.getElementById('raise-amount')?.focus(), 100);
+  }
+}
+
+function startTimer(secs) {
+  clearTimer();
+  let remaining = secs;
+  const timerEl = document.getElementById('turn-timer');
+  timerEl.style.display = 'block';
+  timerEl.textContent = `⏱ ${remaining}s`;
+  timerInterval = setInterval(async () => {
+    remaining--;
+    timerEl.textContent = `⏱ ${remaining}s`;
+    timerEl.classList.toggle('urgent', remaining <= 10);
+    if (remaining <= 0) {
+      clearTimer();
+      await doAction('fold');
+    }
+  }, 1000);
+}
+
+function clearTimer() {
+  clearInterval(timerInterval);
+  timerInterval = null;
+  const timerEl = document.getElementById('turn-timer');
+  timerEl.style.display = 'none';
+}
+
+document.getElementById('btn-fold').onclick = () => doAction('fold');
+document.getElementById('btn-check').onclick = () => doAction('check');
+document.getElementById('btn-call').onclick = () => doAction('call');
+document.getElementById('btn-allin').onclick = () => doAction('allin');
+document.getElementById('btn-raise').onclick = () => {
+  const amt = parseInt(document.getElementById('raise-amount').value);
+  if (!amt || amt <= 0) { toast('Enter a valid raise amount'); return; }
+  doAction('raise', amt);
+};
+
+async function doAction(action, amount=0) {
+  if (!gameState || gameState.currentTurn !== myId) return;
+  clearTimer();
+  document.getElementById('action-panel').classList.remove('show');
+
+  const gs = JSON.parse(JSON.stringify(gameState));
+  const me = gs.players[myId];
+  const toCall = gs.currentBet - me.bet;
+
+  let actualAmount = 0;
+  let logMsg = '';
+
+  switch(action) {
+    case 'fold':
+      me.folded = true; logMsg = 'folds'; break;
+    case 'check':
+      if (toCall > 0) return; logMsg = 'checks'; break;
+    case 'call': {
+      const callAmt = Math.min(toCall, me.stack);
+      me.stack -= callAmt; me.bet += callAmt; me.totalBet += callAmt;
+      gs.pot += callAmt; actualAmount = callAmt; logMsg = `calls $${gs.currentBet}`; break;
+    }
+    case 'raise': {
+      const minRaise = Math.max(gs.currentBet + gs.lastRaise, gs.currentBet + 1);
+      if (amount < minRaise) return;
+      const totalNeeded = amount - me.bet;
+      const actual = Math.min(totalNeeded, me.stack);
+      me.stack -= actual; me.bet += actual; me.totalBet += actual;
+      gs.pot += actual; gs.lastRaise = amount - gs.currentBet;
+      gs.currentBet = amount; gs.actedThisRound = [myId];
+      actualAmount = amount; logMsg = `raises to $${amount}`; break;
+    }
+    case 'allin': {
+      const allIn = me.stack; me.bet += allIn; me.totalBet += allIn; gs.pot += allIn;
+      if (me.bet > gs.currentBet) { gs.lastRaise = me.bet - gs.currentBet; gs.currentBet = me.bet; gs.actedThisRound = [myId]; }
+      me.stack = 0; actualAmount = allIn; logMsg = `goes All-In ($${me.bet})`; break;
+    }
+  }
+
+  if (!gs.actedThisRound) gs.actedThisRound = [];
+  if (!gs.actedThisRound.includes(myId)) gs.actedThisRound.push(myId);
+  gs.lastAction = { playerName: me.name, action: logMsg, amount: actualAmount, ts: Date.now() };
+
+  advanceTurn(gs);
+  await set(roomRef('/gameState'), gs);
+  await update(roomRef(), { lastActive: Date.now() });
+}
+
+function advanceTurn(gs) {
+  const order = gs.playerOrder;
+  const notFolded = order.filter(id => gs.players[id] && !gs.players[id].folded);
+  if (notFolded.length === 1) {
+    const winner = gs.players[notFolded[0]];
+    winner.stack += gs.pot;
+    gs.winner = { id: winner.id, name: winner.name, handName: 'Everyone folded', pot: gs.pot };
+    gs.stage = 'showdown';
+    return;
+  }
+
+  const currentIdx = order.indexOf(gs.currentTurn);
+  let nextId = null; let checked = 0; let idx = currentIdx;
+  while (checked < order.length) {
+    idx = (idx+1) % order.length; checked++;
+    const p = gs.players[order[idx]];
+    if (p && !p.folded && p.stack > 0) { nextId = order[idx]; break; }
+  }
+
+  if (isBettingDone(gs, order)) nextStage(gs);
+  else { gs.currentTurn = nextId; gs.turnStartedAt = Date.now(); }
+}
+
+function isBettingDone(gs, order) {
+  const activePids = order.filter(id => gs.players[id] && !gs.players[id].folded && gs.players[id].stack > 0);
+  for (const id of activePids) {
+    const p = gs.players[id];
+    if (p.bet < gs.currentBet && p.stack > 0) return false;
+    if (!gs.actedThisRound?.includes(id)) return false;
+  }
+  return true;
+}
+
+function nextStage(gs) {
+  for (const id of gs.playerOrder) if (gs.players[id]) gs.players[id].bet = 0;
+  gs.actedThisRound = []; gs.currentBet = 0; gs.lastRaise = 20;
+
+  const order = gs.playerOrder;
+  const activePids = order.filter(id => gs.players[id] && !gs.players[id].folded && gs.players[id].stack > 0);
+
+  if (activePids.length < 2) {
+    const deck = gs.deckRemaining || [];
+    while (gs.stage !== 'showdown') {
+      if (gs.stage === 'preflop') { gs.stage = 'flop'; gs.community = [deck.pop(), deck.pop(), deck.pop()]; }
+      else if (gs.stage === 'flop') { gs.stage = 'turn'; gs.community.push(deck.pop()); }
+      else if (gs.stage === 'turn') { gs.stage = 'river'; gs.community.push(deck.pop()); }
+      else if (gs.stage === 'river') { gs.stage = 'showdown'; gs.deckRemaining = deck; doShowdown(gs); return; }
+    }
+  }
+
+  const dealerIdx = order.indexOf(gs.dealerId);
+  let firstToAct = null;
+  for (let i=1; i<=order.length; i++) {
+    const id = order[(dealerIdx+i)%order.length];
+    if (gs.players[id] && !gs.players[id].folded && gs.players[id].stack > 0) { firstToAct = id; break; }
+  }
+
+  const deck = gs.deckRemaining || [];
+  switch (gs.stage) {
+    case 'preflop': gs.stage = 'flop'; gs.community = [deck.pop(), deck.pop(), deck.pop()]; break;
+    case 'flop': gs.stage = 'turn'; gs.community.push(deck.pop()); break;
+    case 'turn': gs.stage = 'river'; gs.community.push(deck.pop()); break;
+    case 'river': gs.stage = 'showdown'; doShowdown(gs); return;
+  }
+
+  gs.deckRemaining = deck;
+  gs.currentTurn = firstToAct;
+  gs.turnStartedAt = Date.now();
+}
+
+function doShowdown(gs) {
+  const notFolded = gs.playerOrder.map(id => gs.players[id]).filter(p => p && !p.folded);
+  if (notFolded.length === 0) return;
+  const winner = findWinner(notFolded, gs.community);
+  if (winner) {
+    gs.players[winner.id].stack += gs.pot;
+    gs.winner = { id: winner.id, name: winner.name, handName: winner.handResult?.name || '—', hand: winner.hand, pot: gs.pot };
+  }
+}
+
+async function showWinner(gs) {
+  const w = gs.winner; if (!w) return;
+  document.getElementById('winner-name').textContent = w.name;
+  document.getElementById('winner-hand').textContent = w.handName;
+  document.getElementById('winner-pot').textContent = `+ $${w.pot.toLocaleString()}`;
+
+  // Show rebuy option in winner overlay if current player is broke
+  const myData = gs.players[myId];
+  const rebuyArea = document.getElementById('winner-rebuy-area');
+  if (myData && myData.stack <= 0 && !isPending) {
+    rebuyArea.style.display = 'block';
+  } else {
+    rebuyArea.style.display = 'none';
+  }
+
+  const cardsArea = document.getElementById('winner-cards-display');
+  if (w.hand && w.hand.length === 2) {
+    cardsArea.style.display = 'block';
+    const holeArea = document.getElementById('winner-hole-cards');
+    const commArea = document.getElementById('winner-community-cards');
+    if (holeArea) {
+      holeArea.innerHTML = '';
+      holeArea.appendChild(cardEl(w.hand[0]));
+      holeArea.appendChild(cardEl(w.hand[1]));
+    }
+    if (commArea) {
+      commArea.innerHTML = '';
+      if (gs.community && gs.community.length > 0) {
+        commArea.parentElement.style.display = 'block';
+        for (const c of gs.community) commArea.appendChild(cardEl(c));
+      } else {
+        commArea.parentElement.style.display = 'none';
+      }
+    }
+  } else {
+    cardsArea.style.display = 'none';
+  }
+
+  const pendingSnap = await get(roomRef('/pending'));
+  const pending = pendingSnap.exists() ? Object.values(pendingSnap.val()) : [];
+  const nextBtn = document.getElementById('next-hand-btn');
+  
+  if (pending.length > 0) {
+    nextBtn.textContent = `Next Hand (+${pending.length} sitting in)`;
+  } else {
+    nextBtn.textContent = 'Next Hand';
+  }
+
+  if (!isHost) {
+    nextBtn.textContent = 'Waiting for host…'; nextBtn.disabled = true;
+  } else {
+    nextBtn.disabled = false;
+  }
+
+  document.getElementById('winner-overlay').classList.add('show');
+  log(`🏆 ${w.name} wins $${w.pot} — ${w.handName}`, 'win');
+}
+
+document.getElementById('next-hand-btn').addEventListener('click', async () => {
+  if (!isHost) return;
+  document.getElementById('winner-overlay').classList.remove('show');
+  prevWinner = null;
+  const snap = await get(roomRef('/gameState'));
+  if (!snap.exists()) return;
+  await startNewHand(snap.val().players, false);
+});
+
+document.addEventListener('keydown', e => {
+  if (gameState?.currentTurn !== myId) return;
+  if (['INPUT','TEXTAREA'].includes(document.activeElement.tagName)) return;
+  if (e.key.toLowerCase() === 'f') doAction('fold');
+  if (e.key.toLowerCase() === 'c') {
+    const toCall = gameState.currentBet - (gameState.players[myId]?.bet||0);
+    doAction(toCall <= 0 ? 'check' : 'call');
+  }
+  if (e.key.toLowerCase() === 'a') doAction('allin');
+});
+
+// Connection status monitoring
+onValue(ref(db, '.info/connected'), snap => {
+  const dot = document.querySelector('.connection-dot');
+  const statusEl = document.getElementById('connection-status');
+  if (!dot || !statusEl) return;
+  if (snap.val() === true) {
+    dot.className = 'connection-dot online';
+    statusEl.innerHTML = '<span class="connection-dot online"></span>Connected';
+  } else {
+    dot.className = 'connection-dot offline';
+    statusEl.innerHTML = '<span class="connection-dot offline"></span>Reconnecting\u2026';
+  }
+});
+</script>
+</body>
+</html>
